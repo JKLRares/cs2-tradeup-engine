@@ -1,0 +1,6 @@
+            odds1=100/((6/4)*Nr[i]+Nr[j]);
+            odds2=(6/4)*odds1;
+            value1=odds1/100*(a[i+1]+b[i+1]+c[i+1]+d[i+1]+e[i+1])+odds2/100*(a[j]+b[j]+c[j]+d[j]+e[j]);
+            value2=6*f[i]+4*f[j];
+            profit1=value1/value2*100;
+            profit2=profit1-profit1*0.13;

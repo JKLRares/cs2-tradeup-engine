@@ -1,0 +1,29 @@
+﻿# Build artifacts
+build/
+cmake-build-*/
+Debug/
+Release/
+*.exe
+*.obj
+*.o
+*.pdb
+*.ilk
+*.idb
+
+# IDE and local files
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Temporary files and archives
+*.tmp
+*.log
+*.zip
+*.7z
+*.rar
+.dist/
+
+# Generated benchmark output
+benchmarks/results/
