@@ -1,6 +1,6 @@
 # Mathematical specification for the first reference milestone
 
-Status: specified and checked on fixed examples; no reference search engine is implemented yet. This is a versioned model reconstructed from local historical evidence, not an independently certified statement of game rules. Current CS2 mechanics are outside scope.
+Status: approved mathematical baseline, now implemented by the Milestone 2 reference library. [Reference engine documentation](reference-engine.md) defines its concrete API, arithmetic limits, enumeration proof, and verification. This is a versioned model reconstructed from local historical evidence, not an independently certified statement of game rules. Current CS2 mechanics are outside scope.
 
 ## Domain and input meaning
 
