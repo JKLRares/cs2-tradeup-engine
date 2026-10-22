@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "input_row_offset": 66,
+  "scenarios": [
+    {
+      "name": "NORMAL FT MW mov",
+      "workbook_output_rows": [
+        74,
+        75,
+        76,
+        77,
+        78
+      ],
+      "workbook_cost_row": 67,
+      "source_line": 3005
+    },
+    {
+      "name": "NORMAL FT MW roz",
+      "workbook_output_rows": [
+        71,
+        72,
+        73,
+        107,
+        108
+      ],
+      "workbook_cost_row": 69,
+      "source_line": 3008
+    },
+    {
+      "name": "StatTrak FT MW mov",
+      "workbook_output_rows": [
+        82,
+        83,
+        84,
+        85,
+        86
+      ],
+      "workbook_cost_row": 68,
+      "source_line": 3011
+    },
+    {
+      "name": "StatTrak FT MW roz",
+      "workbook_output_rows": [
+        79,
+        80,
+        81,
+        107,
+        108
+      ],
+      "workbook_cost_row": 70,
+      "source_line": 3014
+    },
+    {
+      "name": "NORMAL MW FN mov",
+      "workbook_output_rows": [
+        90,
+        91,
+        92,
+        93,
+        94
+      ],
+      "workbook_cost_row": 103,
+      "source_line": 3017
+    },
+    {
+      "name": "NORMAL MW FN roz",
+      "workbook_output_rows": [
+        87,
+        88,
+        89,
+        107,
+        108
+      ],
+      "workbook_cost_row": 105,
+      "source_line": 3020
+    },
+    {
+      "name": "StatTrak MW FN mov",
+      "workbook_output_rows": [
+        98,
+        99,
+        100,
+        101,
+        102
+      ],
+      "workbook_cost_row": 104,
+      "source_line": 3023
+    },
+    {
+      "name": "StatTrak MW FN roz",
+      "workbook_output_rows": [
+        95,
+        96,
+        97,
+        107,
+        108
+      ],
+      "workbook_cost_row": 106,
+      "source_line": 3026
+    },
+    {
+      "name": "NORMAL FT MW rosu",
+      "workbook_output_rows": [
+        109,
+        110,
+        121,
+        107,
+        108
+      ],
+      "workbook_cost_row": 111,
+      "source_line": 3029
+    },
+    {
+      "name": "StatTrak FT MW rosu",
+      "workbook_output_rows": [
+        112,
+        113,
+        121,
+        107,
+        108
+      ],
+      "workbook_cost_row": 114,
+      "source_line": 3032
+    },
+    {
+      "name": "NORMAL MW FN rosu",
+      "workbook_output_rows": [
+        115,
+        116,
+        121,
+        107,
+        108
+      ],
+      "workbook_cost_row": 117,
+      "source_line": 3035
+    },
+    {
+      "name": "StatTrak MW FN rosu",
+      "workbook_output_rows": [
+        118,
+        119,
+        121,
+        107,
+        108
+      ],
+      "workbook_cost_row": 120,
+      "source_line": 3038
+    }
+  ]
+}

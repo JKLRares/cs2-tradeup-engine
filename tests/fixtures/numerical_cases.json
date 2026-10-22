@@ -1,0 +1,173 @@
+{
+  "schema_version": 1,
+  "probability_policy": "historical-quote-tickets-v1",
+  "fee": "13/100",
+  "qualification_return_percent": "115",
+  "cases": [
+    {
+      "id": "equal_outcome_counts",
+      "provenance": "synthetic",
+      "quantities": [
+        5,
+        5
+      ],
+      "unit_costs": [
+        "1",
+        "2"
+      ],
+      "outcome_prices": [
+        [
+          "10",
+          "30"
+        ],
+        [
+          "20",
+          "40"
+        ]
+      ],
+      "cost": "15",
+      "gross_ev": "25",
+      "net_ev": "87/4",
+      "return_percent": "145",
+      "worst_net": "87/10"
+    },
+    {
+      "id": "unequal_outcome_counts_6_4",
+      "provenance": "synthetic; six/four is a historical restriction, these prices are invented test values",
+      "quantities": [
+        6,
+        4
+      ],
+      "unit_costs": [
+        "1",
+        "2"
+      ],
+      "outcome_prices": [
+        [
+          "10",
+          "30"
+        ],
+        [
+          "20",
+          "40",
+          "60"
+        ]
+      ],
+      "cost": "14",
+      "gross_ev": "30",
+      "net_ev": "261/10",
+      "return_percent": "1305/7",
+      "worst_net": "87/10"
+    },
+    {
+      "id": "integer_normalization_regression",
+      "provenance": "synthetic",
+      "quantities": [
+        5,
+        2,
+        3
+      ],
+      "unit_costs": [
+        "1",
+        "1",
+        "1"
+      ],
+      "outcome_prices": [
+        [
+          "10",
+          "30"
+        ],
+        [
+          "40",
+          "60"
+        ],
+        [
+          "70",
+          "90"
+        ]
+      ],
+      "cost": "10",
+      "gross_ev": "44",
+      "net_ev": "957/25",
+      "return_percent": "1914/5",
+      "worst_net": "87/10"
+    },
+    {
+      "id": "strict_threshold_boundary",
+      "provenance": "synthetic",
+      "quantities": [
+        10
+      ],
+      "unit_costs": [
+        "87/1000"
+      ],
+      "outcome_prices": [
+        [
+          "115/100"
+        ]
+      ],
+      "cost": "87/100",
+      "gross_ev": "23/20",
+      "net_ev": "2001/2000",
+      "return_percent": "115",
+      "worst_net": "2001/2000"
+    },
+    {
+      "id": "six_independent_outcomes",
+      "provenance": "synthetic; tests arbitrary modeled outcome counts",
+      "quantities": [
+        10
+      ],
+      "unit_costs": [
+        "1"
+      ],
+      "outcome_prices": [
+        [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6"
+        ]
+      ],
+      "cost": "10",
+      "gross_ev": "7/2",
+      "net_ev": "609/200",
+      "return_percent": "609/20",
+      "worst_net": "87/100"
+    },
+    {
+      "id": "saved_2024_first_line",
+      "provenance": "historical/2024/most recent version i think/input.txt, scenario StatTrak FT MW mov; www.txt line 1 display 128.098; buckets 2 and 29; structural zero slot omitted",
+      "quantities": [
+        5,
+        5
+      ],
+      "unit_costs": [
+        "0.41",
+        "0.56"
+      ],
+      "outcome_prices": [
+        [
+          "3.82",
+          "3.54",
+          "3.20",
+          "3.29"
+        ],
+        [
+          "10.65",
+          "10.06",
+          "14.89",
+          "6.14",
+          "8.68"
+        ]
+      ],
+      "cost": "97/20",
+      "gross_ev": "6427/900",
+      "net_ev": "186383/30000",
+      "return_percent": "186383/1455",
+      "worst_net": "348/125"
+    }
+  ]
+}
