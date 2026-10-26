@@ -17,6 +17,20 @@ add_library(tradeup_reference STATIC src/reference.cpp)
 target_include_directories(tradeup_reference PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 tradeup_diagnostics(tradeup_reference)
 
+add_library(tradeup_optimized STATIC src/optimized.cpp)
+target_link_libraries(tradeup_optimized PUBLIC tradeup_reference)
+tradeup_diagnostics(tradeup_optimized)
+
+option(TRADEUP_BUILD_BENCHMARKS "Build private local synthetic benchmark" OFF)
+if(TRADEUP_BUILD_BENCHMARKS)
+    add_executable(search_benchmark benchmarks/search_benchmark.cpp)
+    target_link_libraries(search_benchmark PRIVATE tradeup_optimized)
+    if(WIN32)
+        target_link_libraries(search_benchmark PRIVATE psapi)
+    endif()
+    tradeup_diagnostics(search_benchmark)
+endif()
+
 include(CTest)
 if(BUILD_TESTING)
     add_executable(baseline_examples tests/baseline_examples.cpp)
@@ -34,6 +48,16 @@ if(BUILD_TESTING)
     target_link_libraries(reference_fixture_driver PRIVATE tradeup_reference)
     tradeup_diagnostics(reference_fixture_driver)
 
+    add_executable(optimized_tests tests/optimized_tests.cpp)
+    target_link_libraries(optimized_tests PRIVATE tradeup_optimized)
+    tradeup_diagnostics(optimized_tests)
+    add_test(NAME optimized_tests COMMAND optimized_tests)
+    set_tests_properties(optimized_tests PROPERTIES TIMEOUT 120)
+
+    add_executable(optimized_fixture_driver tests/optimized_fixture_driver.cpp)
+    target_link_libraries(optimized_fixture_driver PRIVATE tradeup_optimized)
+    tradeup_diagnostics(optimized_fixture_driver)
+
     set(HISTORICAL_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/historical" CACHE PATH
         "Read-only location of the preserved historical directory")
     find_package(Python3 3.10 QUIET COMPONENTS Interpreter)
@@ -46,6 +70,10 @@ if(BUILD_TESTING)
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_reference.py"
             --driver "$<TARGET_FILE:reference_fixture_driver>")
         set_tests_properties(reference_differential PROPERTIES TIMEOUT 30)
+        add_test(NAME optimized_differential COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_optimized.py"
+            --driver "$<TARGET_FILE:optimized_fixture_driver>")
+        set_tests_properties(optimized_differential PROPERTIES TIMEOUT 60)
     else()
         message(STATUS "Python 3.10+ unavailable: archive and differential checks omitted")
     endif()

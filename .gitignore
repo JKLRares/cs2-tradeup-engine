@@ -24,6 +24,8 @@ Release/
 *.7z
 *.rar
 .dist/
+__pycache__/
+*.pyc
 
 # Generated benchmark output
 benchmarks/results/
