@@ -460,12 +460,21 @@ class CliVerification(unittest.TestCase):
             if os.name=='nt' and getattr(error,'winerror',None)==1314:
                 self.skipTest('Windows account lacks symlink privilege; Linux CI runs these cases')
             raise
+        original_link=link.readlink(); original_stat=link.lstat()
         error=run('search','--input',self.equal,'--format','catalog-v1','--output',link,code=4)
-        self.assertIn('output already exists',error.stderr)
+        # A concurrent destination can also be refused at hard-link publication;
+        # the safety contract does not depend on the OS's diagnostic wording.
+        self.assertTrue(error.stderr.strip())
         self.assertTrue(link.is_symlink());self.assertFalse(missing.exists())
+        self.assertEqual(link.readlink(),original_link)
+        self.assertEqual(link.lstat().st_mtime_ns,original_stat.st_mtime_ns)
+        self.assertFalse(list(directory.glob('.tradeup-export-*.tmp')))
         original=write('symlink-original.json','keep original')
         existing=directory/'existing.json';existing.symlink_to(original)
+        existing_target=existing.readlink()
         self.generic_error_output(existing);self.assertEqual(original.read_text(),'keep original')
+        self.assertTrue(existing.is_symlink());self.assertEqual(existing.readlink(),existing_target)
+        self.assertFalse(list(directory.glob('.tradeup-export-*.tmp')))
         protected=directory/'historical';protected.mkdir()
         alias=directory/'alias';alias.symlink_to(protected,target_is_directory=True)
         error=run('search','--input',self.equal,'--format','catalog-v1','--output',alias/'forbidden.json',code=4)
@@ -490,6 +499,14 @@ class CliVerification(unittest.TestCase):
         self.assertEqual(created.returncode,0,created.stderr)
         replay=document('replay','--input',self.matrix_path,'--output',safe_alias/'report.json')
         self.assertEqual(json.loads((allowed/'report.json').read_text(encoding='utf-8')),replay)
+        missing=directory/'absent-directory';dangling=directory/'dangling-junction'
+        created=subprocess.run(['cmd','/d','/c','mklink','/J',str(dangling),str(missing)],
+                               capture_output=True,timeout=10)
+        self.assertEqual(created.returncode,0,created.stderr)
+        error=run('search','--input',self.equal,'--format','catalog-v1','--output',dangling,code=4)
+        self.assertIn('output already exists',error.stderr)
+        self.assertTrue(os.path.lexists(dangling));self.assertFalse(missing.exists())
+        self.assertFalse(list(directory.glob('.tradeup-export-*.tmp')))
 
 
 if __name__=='__main__':

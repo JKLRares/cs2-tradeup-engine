@@ -3,6 +3,7 @@
 #include <functional>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <limits>
 #include <sstream>
 #include <random>
@@ -37,6 +38,21 @@ int main(){
     test("allocation parse preserves identities",[]{const auto a=parse_allocations("b002:5,b029:5");require(a.size()==2&&a[0].bucket.value=="b002"&&a[1].quantity==5);});
     test("malformed allocations rejected",[]{for(const auto* s:{"","b:0","b:-1","b:11","b:1x","b:1,","b:1:2"}){rejects<std::invalid_argument>([&]{(void)parse_allocations(s);});}});
     test("bounded serialization exact boundary",[]{std::ostringstream out;write_bounded(out,3,[](std::ostream& s){s<<"abc";});require(out.str()=="abc");rejects<std::exception>([]{std::ostringstream sink;write_bounded(sink,2,[](std::ostream& s){s<<"abc";});});});
+    test("single-character writes obey mixed and zero byte budgets",[]{
+        std::ostringstream out;
+        write_bounded(out,4,[](std::ostream& s){s.put('a');s.write("bc",2);s.put('d');});
+        require(out.str()=="abcd");
+        rejects<std::exception>([&]{write_bounded(out,0,[](std::ostream& s){s.put('x');});});
+        require(out.str()=="abcd");
+        std::ostringstream limited;
+        rejects<std::exception>([&]{write_bounded(limited,2,[](std::ostream& s){s.put('a');s.put('b');s.put('c');});});
+        require(limited.str()=="ab");
+    });
+    test("single-character sink failure cannot be reported as success",[]{
+        struct RejectingBuffer final : std::streambuf {};
+        RejectingBuffer rejected; std::ostream sink(&rejected);
+        rejects<std::exception>([&]{write_bounded(sink,1,[](std::ostream& s){s.put('x');});});
+    });
     test("publication refuses a destination created during serialization",[]{
         TemporaryDirectory work; const auto target=work.path/"report.json";
         rejects<std::filesystem::filesystem_error>([&]{write_export(target,100,[&](std::ostream& out){
@@ -51,6 +67,25 @@ int main(){
         write_export(target,payload.size(),[&](std::ostream& out){out<<payload;require(!std::filesystem::exists(target));});
         require(read_local_file(target)==payload);
         require(std::distance(std::filesystem::directory_iterator(work.path),std::filesystem::directory_iterator{})==1);
+    });
+    test("single and bulk writes cross export buffer boundaries exactly",[]{
+        TemporaryDirectory work;
+        for (const std::size_t size : {8191U,8192U,8193U,16384U}) {
+            const auto target=work.path/(std::to_string(size)+".json");
+            const std::string bulk(size,'b'); const auto expected=bulk+std::string(1,'\0')+"end";
+            write_export(target,expected.size(),[&](std::ostream& out){
+                out.write(bulk.data(),static_cast<std::streamsize>(bulk.size()));
+                out.put('\0');out.put('e');out.write("nd",2);
+                require(!std::filesystem::exists(target));
+            });
+            std::ifstream input(target,std::ios::binary);
+            const std::string actual(std::istreambuf_iterator<char>{input},std::istreambuf_iterator<char>{});
+            require(actual==expected);
+        }
+        const auto over_budget=work.path/"over-budget.json";
+        rejects<std::exception>([&]{write_export(over_budget,1,[](std::ostream& out){out.put('a');out.put('b');});});
+        require(!std::filesystem::exists(over_budget));
+        require(std::distance(std::filesystem::directory_iterator(work.path),std::filesystem::directory_iterator{})==4);
     });
     std::cout<<passed<<" application tests passed; "<<failed<<" failed\n";return failed?1:0;
 }

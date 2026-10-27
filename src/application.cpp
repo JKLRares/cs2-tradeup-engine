@@ -92,7 +92,10 @@ private:
     }
     int_type overflow(const int_type c) override {
         if (traits_type::eq_int_type(c, traits_type::eof())) { return traits_type::not_eof(c); }
-        const auto value = traits_type::to_char_type(c); xsputn(&value,1); return c;
+        if (written_ == limit_) { throw std::runtime_error("output byte budget exceeded; export not published"); }
+        const auto actual = sink_->sputc(traits_type::to_char_type(c));
+        if (traits_type::eq_int_type(actual, traits_type::eof())) { throw std::runtime_error("output write failed"); }
+        ++written_; return actual;
     }
     int sync() override { return sink_->pubsync(); }
 };
@@ -103,6 +106,20 @@ bool protected_path(const std::filesystem::path& path) {
         if (s == "historical" || s == ".git") { return true; }
     }
     return false;
+}
+constexpr auto output_exists_message = "output already exists; choose a new path (existing files are never overwritten)";
+bool output_entry_exists(const std::filesystem::path& path) {
+#ifdef _WIN32
+    // Query the directory entry itself, even for a dangling symlink/junction.
+    // Some MinGW symlink_status implementations report its missing target.
+    if (GetFileAttributesW(path.c_str()) != INVALID_FILE_ATTRIBUTES) { return true; }
+    const auto error = GetLastError();
+    if (error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND) { return false; }
+    throw std::filesystem::filesystem_error("cannot inspect output destination", path,
+        std::error_code(static_cast<int>(error), std::system_category()));
+#else
+    return std::filesystem::symlink_status(path).type() != std::filesystem::file_type::not_found;
+#endif
 }
 std::filesystem::path resolved_output_parent(const std::filesystem::path& parent) {
 #ifdef _WIN32
@@ -218,7 +235,7 @@ void write_export(const std::filesystem::path& path, const std::size_t max_bytes
     const auto absolute = std::filesystem::absolute(path);
     const auto target = resolved_output_parent(absolute.parent_path()) / absolute.filename();
     if (protected_path(target)) { throw std::invalid_argument("resolved output is inside protected historical materials or .git"); }
-    if (std::filesystem::symlink_status(target).type() != std::filesystem::file_type::not_found) { throw std::invalid_argument("output already exists; choose a new path (existing files are never overwritten)"); }
+    if (output_entry_exists(target)) { throw std::invalid_argument(output_exists_message); }
     if (!std::filesystem::is_directory(target.parent_path())) { throw std::invalid_argument("output parent directory does not exist"); }
     std::filesystem::path temporary;
     ExclusiveFileBuffer buffer;
@@ -233,7 +250,14 @@ void write_export(const std::filesystem::path& path, const std::size_t max_bytes
         file.exceptions(std::ios::badbit|std::ios::failbit);
         write_bounded(file,max_bytes,writer); buffer.close();
         // create_hard_link fails if the destination exists: no overwrite race.
-        std::filesystem::create_hard_link(temporary,target);
+        std::error_code error;
+        std::filesystem::create_hard_link(temporary,target,error);
+        if (error) {
+            if (error == std::errc::file_exists || output_entry_exists(target)) {
+                throw std::filesystem::filesystem_error(output_exists_message, temporary, target, error);
+            }
+            throw std::filesystem::filesystem_error("cannot create hard link", temporary, target, error);
+        }
         std::filesystem::remove(temporary);
     } catch (...) {
         try { buffer.close(); } catch (...) { /* Preserve the original diagnostic. */ }

@@ -1,6 +1,5 @@
 # CS2 Trade-Up Engine
-
-**Author**: Rares Constantinescu
+**Author:** Rareș Constantinescu
 
 A [trade-up contract](https://help.steampowered.com/en/faqs/view/0151-608B-BCAA-D7D5)
 exchanges Counter-Strike weapon skins for a higher-rarity result. The possible
