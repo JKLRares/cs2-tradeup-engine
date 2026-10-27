@@ -1,0 +1,9 @@
+tradeup-catalog-v1
+scenario	synthetic-boundary	Synthetic strict return boundary
+valuation	synthetic-basket-v1
+unit	synthetic-unit
+collection	c	Synthetic collection
+outcome	c	o	1.15	synthetic	Local synthetic boundary
+bucket	b001	c	L	0.087	synthetic	Local synthetic boundary	representative	Lower
+bucket	b002	c	H	0.087	synthetic	Local synthetic boundary	representative	Higher
+limitation	Synthetic exact 115 percent return; strict qualification excludes equality.

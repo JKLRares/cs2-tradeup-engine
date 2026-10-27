@@ -21,6 +21,17 @@ add_library(tradeup_optimized STATIC src/optimized.cpp)
 target_link_libraries(tradeup_optimized PUBLIC tradeup_reference)
 tradeup_diagnostics(tradeup_optimized)
 
+add_library(tradeup_application STATIC src/sha256.cpp src/catalog_io.cpp src/historical.cpp
+    src/application.cpp src/serialization.cpp)
+target_link_libraries(tradeup_application PUBLIC tradeup_optimized)
+tradeup_diagnostics(tradeup_application)
+add_executable(tradeup src/cli.cpp)
+target_link_libraries(tradeup PRIVATE tradeup_application)
+if(MINGW)
+    target_link_options(tradeup PRIVATE -municode)
+endif()
+tradeup_diagnostics(tradeup)
+
 option(TRADEUP_BUILD_BENCHMARKS "Build private local synthetic benchmark" OFF)
 if(TRADEUP_BUILD_BENCHMARKS)
     add_executable(search_benchmark benchmarks/search_benchmark.cpp)
@@ -58,6 +69,12 @@ if(BUILD_TESTING)
     target_link_libraries(optimized_fixture_driver PRIVATE tradeup_optimized)
     tradeup_diagnostics(optimized_fixture_driver)
 
+    add_executable(application_tests tests/application_tests.cpp)
+    target_link_libraries(application_tests PRIVATE tradeup_application)
+    tradeup_diagnostics(application_tests)
+    add_test(NAME application_tests COMMAND application_tests)
+    set_tests_properties(application_tests PROPERTIES TIMEOUT 30)
+
     set(HISTORICAL_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/historical" CACHE PATH
         "Read-only location of the preserved historical directory")
     find_package(Python3 3.10 QUIET COMPONENTS Interpreter)
@@ -74,6 +91,14 @@ if(BUILD_TESTING)
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_optimized.py"
             --driver "$<TARGET_FILE:optimized_fixture_driver>")
         set_tests_properties(optimized_differential PROPERTIES TIMEOUT 60)
+        add_test(NAME cli_end_to_end COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_cli.py" --app "$<TARGET_FILE:tradeup>"
+            --historical-root "${HISTORICAL_ROOT}")
+        set_tests_properties(cli_end_to_end PROPERTIES TIMEOUT 120)
+        add_test(NAME historical_metadata COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/reconstruct_historical_metadata.py" --check
+            --historical-root "${HISTORICAL_ROOT}")
+        set_tests_properties(historical_metadata PROPERTIES TIMEOUT 30)
     else()
         message(STATUS "Python 3.10+ unavailable: archive and differential checks omitted")
     endif()

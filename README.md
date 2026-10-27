@@ -1,80 +1,132 @@
-﻿# Historical Trade-Up Search Engine
+# Historical Trade-Up Search Engine
 
 **Author:** Rareș Constantinescu
 
-An offline C++20 reference engine for studying bounded trade-up search and expected returns using explicitly modeled local price data. The original personal prototype dates from 2023, the Sheets/C++ workflow was extended in 2024, and the reference implementation was developed in 2026.
+An entirely offline C++20 application for inspecting historical trade-up prices,
+evaluating quantity contracts, and searching restricted combinatorial domains with
+exact arithmetic and explicit resource budgets.
 
-Milestone 2 provides exact arithmetic, validated collection/bucket/outcome models, canonical contract identities, and exhaustive enumeration for bounded historical wear profiles. It is a library with verification tools; a practical application and optimized search are later milestones.
+The personal prototype began in 2023 and the Sheets/C++ workflow expanded in 2024.
+The 2026 implementation adds independently verified reference and optimized
+engines, content-derived dataset identities and a practical CLI. Original programs
+and spreadsheets remain unaltered evidence, documented separately in the
+[historical baseline](docs/historical-baseline.md).
 
-## Model and supported search
+## Build on Windows
 
-The `historical-quote-tickets-v1` policy gives each declared outcome one ticket per contributing collection input. Net expected value uses the historical 13% proportional deduction. Qualification compares exact return percentages strictly against a threshold; the default `>115` means expected ROI above 15%.
-
-The named search profiles use ten inputs, either a 5/5 or 6/4 lower/higher wear split, and two to five active buckets. Enumeration supports at most 12 catalog buckets, with explicit node and result budgets. It emits each eligible vector once and retains distinct contracts with equal returns. The evaluator accepts general ten-input contracts and arbitrary positive modeled outcome counts.
-
-Historical values include quotes, composite averages, and ratio-derived estimates. Their provenance and limitations remain explicit. A mathematically positive expected return does not prove exact output wear, purchasable listings, or profit under every real outcome. Current CS2 compatibility is outside this model.
-
-- [Reference API, enumeration proof, identity, and arithmetic limits](docs/reference-engine.md)
-- [Milestone 2 results, exact changed files, and review notes](docs/milestone-2-report.md)
-- [Approved mathematical specification](docs/mathematical-model.md)
-- [Historical evidence and data formats](docs/historical-baseline.md)
-- [Milestone 1 baseline report](docs/milestone-1-report.md)
-
-## Build and verify on Windows
-
-Requires a C++20 compiler and Python 3.10+ for independent verification. There are no third-party libraries, downloads, accounts, or network services.
-
-The tested PowerShell route uses the available MSYS2 UCRT64 GCC compiler. The execution-policy option applies only to that child process and does not change persistent policy:
+The verified direct build uses MSYS2 UCRT64 GCC 14.2.0. There are no third-party
+libraries, downloads, accounts or network services. Python 3.10+ is used for
+verification, not application execution. From the repository root in PowerShell:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_reference.ps1 -Compiler 'C:\msys64\ucrt64\bin\g++.exe' -Configuration Debug
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_reference.ps1 -Compiler 'C:\msys64\ucrt64\bin\g++.exe' -Configuration Release
+$env:PATH = 'C:\msys64\ucrt64\bin;' + $env:PATH
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build_cli.ps1 -Configuration Release
+$app = '.\.dist\milestone4\tradeup_Release.exe'
+& $app --help
 ```
 
-The helper compiles the reference implementation and three test executables, then runs the full available suite. Build output defaults to `build/reference-direct`; `-BuildDirectory` and `-HistoricalRoot` accept explicit paths. A failed compile or check terminates the script.
+Execution-policy bypass applies only to the child process. `-Compiler` and
+`-BuildDirectory` accept explicit paths. Keep the compiler's runtime DLL directory
+on PATH. Debug builds use `-Configuration Debug` and produce `tradeup_Debug.exe`.
+CMake targets are supplied; CMake/CTest are unavailable in this environment, so
+the direct build is the verified route.
 
-Expected summaries per configuration:
-
-```text
-PASS: 9 numerical and language-semantics checks
-Reference unit tests: 36 passed, 0 failed
-Ran 14 tests ... OK
-Ran 8 tests ... OK
-PASS: complete available Debug verification suite
-```
-
-The last line uses the selected configuration. Independent comparisons include 6,000 rational operations, six baseline fixtures, 40 generated evaluations, and 18 bounded enumeration cases containing 1,249 eligible vectors.
-
-With CMake 3.20+ and a matching installed generator:
+## Inspect and replay authentic historical data
 
 ```powershell
-cmake -S . -B build/cmake -G "MinGW Makefiles" -DCMAKE_CXX_COMPILER=C:/msys64/ucrt64/bin/g++.exe -DCMAKE_MAKE_PROGRAM=C:/msys64/ucrt64/bin/mingw32-make.exe -DCMAKE_BUILD_TYPE=Debug
-cmake --build build/cmake
-ctest --test-dir build/cmake --output-on-failure
+$matrix = '.\historical\2024\most recent version i think\input.txt'
+& $app scenarios
+& $app profiles
+& $app inspect --input $matrix --scenario st-ft-mw-mov
+& $app replay --input $matrix --details
+& $app eval --input $matrix --scenario 'StatTrak FT MW mov' --contract 'b002:5,b029:5'
 ```
 
-CMake builds `tradeup_reference`, `baseline_examples`, `reference_tests`, and the private `reference_fixture_driver`. With Python available, CTest registers four suites. CMake/CTest were not found in the current environment, so that route remains unverified. Direct Debug and Release builds passed with GCC 14.2.0 and strict warnings. No sanitizer coverage is claimed.
+The preserved 55×58 matrix supplies all 3,190 prices. All twelve scenario mappings
+come from source/workbook evidence. Odd/even buckets represent lower/higher input
+wear; outcomes use the historical higher-wear quote basket. `inspect --json
+--matrix` exposes every original price and selected-scenario metadata.
 
-The preserved baseline can also be checked without compiling:
+Replay uses five BREAKOUT higher-category inputs (`b002`) and five BROKEN FANG
+lower-category inputs (`b029`). It reproduces cost **4.85**, exact modeled return
+**186383/1455% ≈ 128.098282%**, and expected ROI **≈ 28.098282%** through the actual
+import/evaluation path. This does not establish exact float feasibility, purchase
+availability or guaranteed profit.
+
+## Search, filter and export
 
 ```powershell
-python .\tools\verify_baseline.py
+& $app search --input $matrix --profile '5/5' --max-evaluations 1000 --top 3 `
+    --output '.\.dist\milestone4\historical-prefix.json'
+$LASTEXITCODE
+
+& $app search --input '.\examples\synthetic-equal-returns.tsv' --format catalog-v1 `
+    --min-roi 15 --max-cost 10 --sort profit --top 3 `
+    --output '.\.dist\milestone4\synthetic-results.csv'
 ```
 
-Add `--require-local` to require all 33 locally preserved files. A clean checkout may omit untracked/ignored archival files; present files must match their recorded hashes.
+The historical command deliberately bounds a prefix: exit code **3** means an
+incomplete budget-limited search. The synthetic example completes with 405
+distinct equal-return contracts. Choose new export paths on repeated runs:
+existing files are never overwritten. JSON and CSV preserve exact fractions,
+identities, policies, provenance, limits and completion status. `--details` adds
+the full modeled outcome distribution.
 
-## Design and limitations
+`--min-return` defaults to strict `>115`, equivalent to expected ROI `>15%`.
+`--min-roi` is an alternative. `--max-cost` filters retained results inclusively
+after search. Ranking uses exact expected ROI or profit, then canonical identity.
+`--top` limits human display only; machine output contains every matching retained
+result. Equal returns never merge distinct contracts.
 
-The engine retains the original collection grouping, representative-price concept, quantity contracts, canonical option order, and shared scenario model. It replaces unsafe fixed arrays and integer-truncated weights with validated values and exact checked rational calculations.
+Both profiles require ten inputs and two to five active buckets, with 5/5 or 6/4
+lower/higher wear quantities. They are restrictions, not unrestricted searches.
+The reference enumerator supports twelve catalog buckets; the optimized engine
+supports larger catalogs with explicit budgets. A 58-bucket 5/5 domain has
+80,723,385 contracts. Loading it does not mean completing its search, and default
+commands never launch an unbounded traversal.
 
-The reference enumerator favors a transparent completeness argument. It provides no optimized pruning, parallel search, Top-K, compact result grouping, spreadsheet converter, or application CLI. The private fixture driver is a verification interface rather than a user-facing import format. There are no speedup or benchmark claims.
+The documented `tradeup-catalog-v1` UTF-8 TSV format also supports local declared
+catalogs with arbitrary positive modeled outcome counts and explicit provenance.
+SHA-256 snapshot identities bind normalized prices and scenario/policy metadata,
+independently of filesystem paths.
 
-All files under `historical/` remain immutable, including untracked artifacts. Historical binaries are never executed or linked. Missing prices are rejected; explicit zero-valued outcomes remain possible. Exact arithmetic has documented signed-64-bit intermediate limits and fails explicitly on overflow. See the reference documentation for the complete supported domain.
+## Verification and documentation
 
-## Roadmap
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_cli.ps1 -Configuration Debug
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_cli.ps1 -Configuration Release
+```
 
-1. Historical baseline and mathematical specification — reviewed and approved.
-2. Independent C++ reference engine — delivered for review.
-3. Optimized engine with differential verification — requires authorization.
-4. Local data conversion and practical command-line workflow.
-5. Reproducible benchmarks, CI, and portfolio release.
+These run all Milestone 1–3 regressions, the reconstructed workbook-ledger check,
+application C++ tests and independent CLI tests. Earlier direct scripts and
+bounded synthetic benchmarks remain available. Historical binaries are never
+compiled, linked or run.
+
+The modernization was developed with AI assistance. Mathematical and verification
+claims are backed by the checked-in specifications, independent oracles and
+recorded results.
+
+- [CLI, local formats, identity, export and budget semantics](docs/offline-cli.md)
+- [Milestone 4 integration and verification report](docs/milestone-4-report.md)
+- [Optimized engine and completeness proofs](docs/optimized-engine.md)
+- [Measured benchmarks and their limits](docs/milestone-3-report.md)
+- [Reference engine and arithmetic limits](docs/reference-engine.md)
+- [Mathematical model](docs/mathematical-model.md)
+- [Historical origins and evidence](docs/historical-baseline.md)
+
+## Limits
+
+Calculations retain `historical-quote-tickets-v1` and the historical proportional
+13% deduction. Currency, actual quote timestamps, exact floats, listing supply and
+independently verified current game mechanics remain unknown. Composite averages
+and ratio estimates are labeled. Missing prices are rejected; explicitly modeled
+zero-valued outcomes keep their probability mass.
+
+Unsupported checked signed-64-bit arithmetic fails explicitly. Search results
+distinguish complete coverage from evaluation, work, time, storage and arithmetic
+interruptions. Exports are bounded and published only after successful
+serialization. Sanitizer runtimes remain unavailable; no sanitizer run is claimed.
+
+Release automation, CI deployment and further portability validation remain
+outside this milestone. No live-market, account or automated-trading features
+are provided.
