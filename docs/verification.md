@@ -84,15 +84,25 @@ requires external networking. The action sources are
 [official checkout](https://github.com/actions/checkout/tree/v5) and
 [MSYS2 setup](https://github.com/msys2/setup-msys2/tree/v2).
 
-**Hosted execution is pending.** No workflow was pushed/triggered during this work.
-Local `actionlint` 1.7.12 validation of the workflow passed with no diagnostics;
-the downloaded Windows tool's published SHA-256 was checked before execution.
-Windows GCC CMake/CTest and direct builds were executed locally; Linux, Clang,
-MSVC and sanitizers remain unverified. Windows link probes failed for missing
-`-lasan`/`-lubsan`; that is a blocker, not sanitizer coverage. The workflow will
-provide actual execution only after the owner pushes it and reviews the results.
-Windows symlink tests explicitly report a privilege skip when the account lacks
-symlink creation rights; Linux is expected to execute those cases.
+Both confirmed hosted runs on `modernization` succeeded, with **all five jobs
+passing in each run**:
+
+- [Push run 40595037871](https://github.com/JKLRares/cs2-tradeup-engine/actions/runs/40595037871)
+- [Pull-request run 40595046261](https://github.com/JKLRares/cs2-tradeup-engine/actions/runs/40595046261)
+
+Each passed Linux Debug, Linux Release, Linux Debug with ASan+UBSan, Windows
+UCRT64 Debug and Windows UCRT64 Release. The Linux sanitizer job built and ran
+the C++ tests, differential drivers and application tests under ASan/UBSan.
+
+These hosted results are separate from the earlier local Windows checks below
+and the [recorded Windows benchmark measurements](benchmarks.md). Earlier local
+Windows link probes failed for missing `-lasan`/`-lubsan`; the successful Linux job
+does not imply native Windows sanitizer support. Clang, MSVC and macOS remain
+unverified. Windows symlink tests still explicitly report a privilege skip when
+the account lacks symlink creation rights.
+
+Local `actionlint` 1.7.12 validation of the workflow also passed with no diagnostics.
+The downloaded Windows tool's published SHA-256 was checked before execution.
 
 ## Recorded local results
 
@@ -144,5 +154,6 @@ The [historical replay](offline-cli.md#historical-replay) and exact JSON/CSV exp
 passed through the real importer/evaluator. [Benchmarks](benchmarks.md) preserve
 the separately recorded original and final timing runs.
 
-These are local Windows results. Hosted Linux/Windows workflow results and actual
-ASan/UBSan execution remain pending; Clang, MSVC and macOS have not been executed.
+These are the earlier local Windows results. The successful hosted Linux/Windows
+and Linux ASan/UBSan runs are documented separately above; they are not additional
+local measurements. Clang, MSVC and macOS have not been executed.

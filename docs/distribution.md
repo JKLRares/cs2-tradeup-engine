@@ -56,6 +56,7 @@ Only include historical fixtures after the data decision. That layout is a
 proposal, not an implemented/verified package or public release.
 
 Before making the repository public, review the full existing Git history for
-private material, decide the license/data scope, and obtain actual passing hosted
-Linux/sanitizer/Windows results. Keep the repository private while resolving any
-such question; visibility and release publication remain owner actions.
+private material, decide the license/data scope, and review the
+[successful hosted Linux/Windows and sanitizer results](verification.md#automation-and-actual-coverage).
+Keep the repository private while resolving any such question; visibility and
+release publication remain owner actions.

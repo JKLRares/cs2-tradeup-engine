@@ -154,9 +154,10 @@ ctest --test-dir build/release --output-on-failure
 Tests cover exact fixtures, exhaustive small searches, independent Python
 Fraction/Cartesian comparisons, historical reconstruction and adversarial CLI
 and export behavior. [Verification details](docs/verification.md) distinguish
-executed local checks from pending hosted CI and sanitizer runs.
-[GitHub Actions](.github/workflows/verify.yml) configures Linux Debug/Release,
-Linux ASan+UBSan and Windows UCRT64 Debug/Release; hosted success is not claimed.
+earlier local checks from successful hosted runs.
+[GitHub Actions](.github/workflows/verify.yml) passed all five jobs for both push
+and pull request: Linux Debug/Release, Linux Debug with ASan+UBSan, and Windows
+UCRT64 Debug/Release. Linked run results are in the verification guide.
 See [building](docs/building.md) for Debug, direct GCC and Linux commands.
 
 ## Background

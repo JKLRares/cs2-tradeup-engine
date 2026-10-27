@@ -218,4 +218,5 @@ speedup was only 1.06x. Small microsecond-scale differences and cross-run change
 can reflect scheduling/noise; the original compact 5/5 outlier remains reported.
 No claim extends these ratios to all inputs, real listings, current CS2 rules or
 full 58-bucket historical mixed searches. All timings here were obtained locally
-on Windows; hosted CI, Linux and sanitizer execution remain pending.
+on Windows. [Hosted Linux/Windows tests and Linux ASan/UBSan execution](verification.md#automation-and-actual-coverage)
+have passed; those runs do not provide new benchmark measurements.

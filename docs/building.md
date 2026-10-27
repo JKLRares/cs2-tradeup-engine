@@ -84,7 +84,7 @@ native filesystem paths. Saved JSON/CSV is UTF-8; in PowerShell 5 use
 depends on the terminal's font/encoding. Inputs accept LF and CRLF; embedded bare
 carriage returns are rejected.
 
-## Linux: CI configuration, execution pending
+## Linux: verified hosted builds and sanitizers
 
 With GCC, CMake 3.20+, Ninja and Python 3.10+ installed:
 
@@ -109,9 +109,10 @@ ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1:print_
 The sanitizer option instruments all modern libraries, CLI, C++ tests and private
 drivers, including binaries invoked by Python. It checks runtime linkage and
 rejects unsupported Windows/compiler configurations; successful linkage alone
-does not establish execution coverage. The local Windows GCC installation lacks
-`libasan` and `libubsan`. No usable Linux environment was available locally.
-Hosted Linux/sanitizer execution remains pending; see [verification](verification.md).
+does not establish execution coverage. Linux builds and ASan/UBSan test execution
+passed in both [confirmed hosted runs](verification.md#automation-and-actual-coverage).
+Earlier local Windows GCC probes could not link `libasan` or `libubsan`; those
+local limitations are separate from the successful hosted Linux verification.
 
 ## Optional targets and dependency-free build
 
