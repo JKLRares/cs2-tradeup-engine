@@ -11,6 +11,7 @@ from fractions import Fraction as F
 import hashlib
 import io
 import json
+import os
 from pathlib import Path
 import random
 import re
@@ -415,6 +416,80 @@ class CliVerification(unittest.TestCase):
                 actual={(o['collection'],o['outcome']):(F(o['probability']),F(o['gross_price']['value']),F(o['net_receipt'])) for o in e['outcomes']}
                 self.assertEqual(actual,expected)
                 STATS['historical_prefix_results']+=1
+
+    def test_26_file_record_and_entity_limits(self):
+        for name, size, format in [('large-matrix.txt',1024*1024+1,'historical-2024'),
+                                   ('large-catalog.tsv',8*1024*1024+1,'catalog-v1')]:
+            path=WORK/name
+            path.write_bytes(b'x'*size)
+            self.assertIn('byte limit',run('inspect','--input',path,'--format',format,code=2).stderr)
+        content=self.boundary.read_text(encoding='utf-8')
+        variants=[(content+'limitation\t'+'x'*16384+'\n','16 KiB'),
+                  (content+''.join(f'collection\tc{i}\tC\n' for i in range(4097)),'4096'),
+                  (content+''.join(f'bucket\tb{i+10}\tc\tL\t1\tsynthetic\tsource\trepresentative\tB\n' for i in range(4097)),'4096'),
+                  (content+''.join(f'outcome\tc\to{i}\t1\tsynthetic\tsource\n' for i in range(100001)),'100000')]
+        for i,(text,diagnostic) in enumerate(variants):
+            error=run('inspect','--input',write(f'entity-limit-{i}.tsv',text),'--format','catalog-v1',code=2).stderr
+            self.assertIn(diagnostic,error)
+
+    def test_27_newline_identity_and_control_characters(self):
+        raw=self.equal.read_bytes().replace(b'\r\n',b'\n')
+        paths=[WORK/'lf.tsv',WORK/'crlf.tsv']
+        paths[0].write_bytes(raw);paths[1].write_bytes(raw.replace(b'\n',b'\r\n'))
+        a,b=[self.generic('inspect',p)['dataset'] for p in paths]
+        self.assertEqual(a['snapshot_id'],b['snapshot_id'])
+        self.assertNotEqual(a['source_sha256'],b['source_sha256'])
+        for i,raw in enumerate((raw.replace(b'collection\t',b'collection\r\t',1),raw+b'\r',raw+b'\x1b',raw+b'\x7f',raw+b'\xe2\x82')):
+            path=WORK/f'controls-{i}.tsv';path.write_bytes(raw)
+            self.assertTrue(run('inspect','--input',path,'--format','catalog-v1',code=2).stderr)
+
+    def test_28_existing_hard_link_is_never_modified(self):
+        original=write('hardlink-original.json','original bytes')
+        target=WORK/'hardlink-output.json'
+        os.link(original,target)
+        self.generic_error_output(target)
+        self.assertEqual(original.read_bytes(),b'original bytes')
+        self.assertEqual(target.read_bytes(),b'original bytes')
+
+    def test_29_symlink_destinations_and_protected_parent(self):
+        directory=WORK/'symlink-tests';directory.mkdir()
+        missing=directory/'missing.json';link=directory/'dangling.json'
+        try:
+            link.symlink_to(missing)
+        except OSError as error:
+            if os.name=='nt' and getattr(error,'winerror',None)==1314:
+                self.skipTest('Windows account lacks symlink privilege; Linux CI runs these cases')
+            raise
+        error=run('search','--input',self.equal,'--format','catalog-v1','--output',link,code=4)
+        self.assertIn('output already exists',error.stderr)
+        self.assertTrue(link.is_symlink());self.assertFalse(missing.exists())
+        original=write('symlink-original.json','keep original')
+        existing=directory/'existing.json';existing.symlink_to(original)
+        self.generic_error_output(existing);self.assertEqual(original.read_text(),'keep original')
+        protected=directory/'historical';protected.mkdir()
+        alias=directory/'alias';alias.symlink_to(protected,target_is_directory=True)
+        error=run('search','--input',self.equal,'--format','catalog-v1','--output',alias/'forbidden.json',code=4)
+        self.assertIn('resolved output is inside protected',error.stderr)
+        self.assertEqual(list(protected.iterdir()),[])
+
+    @unittest.skipUnless(os.name=='nt','Windows junction behavior only')
+    def test_30_windows_junction_resolves_protected_directory(self):
+        directory=WORK/'junction-tests';directory.mkdir()
+        protected=directory/'historical';protected.mkdir()
+        alias=directory/'innocent-alias'
+        created=subprocess.run(['cmd','/d','/c','mklink','/J',str(alias),str(protected)],
+                               capture_output=True,timeout=10)
+        self.assertEqual(created.returncode,0,created.stderr)
+        error=run('search','--input',self.equal,'--format','catalog-v1','--output',alias/'forbidden.json',code=4)
+        self.assertIn('resolved output is inside protected',error.stderr)
+        self.assertEqual(list(protected.iterdir()),[])
+        allowed=directory/'allowed';allowed.mkdir()
+        safe_alias=directory/'safe-alias'
+        created=subprocess.run(['cmd','/d','/c','mklink','/J',str(safe_alias),str(allowed)],
+                               capture_output=True,timeout=10)
+        self.assertEqual(created.returncode,0,created.stderr)
+        replay=document('replay','--input',self.matrix_path,'--output',safe_alias/'report.json')
+        self.assertEqual(json.loads((allowed/'report.json').read_text(encoding='utf-8')),replay)
 
 
 if __name__=='__main__':

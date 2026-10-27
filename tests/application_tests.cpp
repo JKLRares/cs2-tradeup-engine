@@ -1,14 +1,28 @@
 #include "tradeup/application.hpp"
 
 #include <functional>
+#include <fstream>
 #include <iostream>
 #include <limits>
 #include <sstream>
+#include <random>
 
 using namespace tradeup;
 namespace {
 void require(const bool condition){if(!condition){throw std::runtime_error("check failed");}}
 template<class Exception,class F>void rejects(F f){try{f();}catch(const Exception&){return;}throw std::runtime_error("expected exception");}
+struct TemporaryDirectory {
+    std::filesystem::path path;
+    TemporaryDirectory() {
+        std::random_device random;
+        for (int i=0; i<16; ++i) {
+            auto candidate=std::filesystem::temp_directory_path() / ("tradeup-publication-test-"+std::to_string(random()));
+            if (std::filesystem::create_directory(candidate)) { path=std::move(candidate); return; }
+        }
+        throw std::runtime_error("cannot create publication test directory");
+    }
+    ~TemporaryDirectory() { std::error_code ignored; std::filesystem::remove_all(path,ignored); }
+};
 }
 int main(){
     int passed=0,failed=0;
@@ -23,5 +37,20 @@ int main(){
     test("allocation parse preserves identities",[]{const auto a=parse_allocations("b002:5,b029:5");require(a.size()==2&&a[0].bucket.value=="b002"&&a[1].quantity==5);});
     test("malformed allocations rejected",[]{for(const auto* s:{"","b:0","b:-1","b:11","b:1x","b:1,","b:1:2"}){rejects<std::invalid_argument>([&]{(void)parse_allocations(s);});}});
     test("bounded serialization exact boundary",[]{std::ostringstream out;write_bounded(out,3,[](std::ostream& s){s<<"abc";});require(out.str()=="abc");rejects<std::exception>([]{std::ostringstream sink;write_bounded(sink,2,[](std::ostream& s){s<<"abc";});});});
+    test("publication refuses a destination created during serialization",[]{
+        TemporaryDirectory work; const auto target=work.path/"report.json";
+        rejects<std::filesystem::filesystem_error>([&]{write_export(target,100,[&](std::ostream& out){
+            out<<"completed export"; std::ofstream competitor(target,std::ios::binary); competitor<<"keep competitor";
+        });});
+        require(read_local_file(target)=="keep competitor");
+        require(std::distance(std::filesystem::directory_iterator(work.path),std::filesystem::directory_iterator{})==1);
+    });
+    test("buffered publication writes all bytes before becoming visible",[]{
+        TemporaryDirectory work; const auto target=work.path/"complete.json";
+        const std::string payload(20000,'x');
+        write_export(target,payload.size(),[&](std::ostream& out){out<<payload;require(!std::filesystem::exists(target));});
+        require(read_local_file(target)==payload);
+        require(std::distance(std::filesystem::directory_iterator(work.path),std::filesystem::directory_iterator{})==1);
+    });
     std::cout<<passed<<" application tests passed; "<<failed<<" failed\n";return failed?1:0;
 }

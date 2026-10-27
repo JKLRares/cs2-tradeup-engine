@@ -32,6 +32,11 @@ std::string read_local_file(const std::filesystem::path& path, const std::size_t
     for (const unsigned char c : result) {
         if ((c < 32 && c != '\n' && c != '\r' && c != '\t') || c == 127) { throw std::invalid_argument("input contains unsupported control bytes"); }
     }
+    for (std::size_t i = 0; i < result.size(); ++i) {
+        if (result[i] == '\r' && (i+1 == result.size() || result[i+1] != '\n')) {
+            throw std::invalid_argument("input contains a bare carriage return; use LF or CRLF records");
+        }
+    }
     for (std::size_t i=0;i<result.size();) {
         const auto c=static_cast<unsigned char>(result[i++]);
         if(c<128){continue;}

@@ -3,7 +3,7 @@
 The application separates input parsing, historical mapping, dataset validation,
 content identity, unchanged search/evaluation engines, command parsing and output.
 It performs no network operations. See [README](../README.md) for PowerShell build
-and usage commands and [the report](milestone-4-report.md) for executed results.
+and usage commands and [verification](verification.md) for executed results.
 
 ## Commands
 
@@ -76,6 +76,14 @@ role, quote kind and expanded formula/reference lineage. Shared OOXML formulas
 are translated relative to their anchors; formulas are never executed. Check it
 with `python tools/reconstruct_historical_metadata.py --check`. Normal builds/runs
 use the checked-in ledger and do not need Python or a workbook parser.
+The [verification guide](verification.md) explains exact archive versus Git LF
+hash checks and the tracked evidence required in a clean checkout.
+
+The explicit role map omits workbook rows 107, 108 and 121, plus fifth `mov`
+slots at rows 78, 86, 94 and 102 for BREAKOUT, CHROMA, CHROMA 2, SHADOW and
+WINTER OFFENSIVE, in both wear columns. The complete ledger classifies 2,260
+cached observations, 696 minima, eight composite averages, twelve ratio estimates
+and 214 structural padding cells. Acquisition and quote times remain unknown.
 
 The frozen projection has 214 formula-free zero padding cells. **Runtime zero
 prices never determine padding.** Nonzero replacement values in declared padding
@@ -102,6 +110,7 @@ lines and lines beginning `#` are ignored. Entity records may be reordered. IDs
 use the engines' restricted ASCII token grammar; text can contain Unicode, quotes
 and commas, but tabs/newlines are delimiters, not embedded escapes. Files are
 limited to 8 MiB and noncomment records to 16 KiB.
+LF and CRLF records are supported; a bare carriage return inside a field is rejected.
 
 | Record | Fields after its name |
 | --- | --- |
@@ -162,6 +171,39 @@ million-a vectors, Python `hashlib`, and independent Python canonicalization.
 Existing canonical contract/evaluation serialization is unchanged. Archive/Git
 dates never stand in for quote timestamps.
 
+## Historical replay
+
+`replay` evaluates five BREAKOUT higher-MW inputs (`b002`, unit cost `41/100`)
+and five BROKEN FANG lower-FT inputs (`b029`, unit cost `14/25`) in
+`st-ft-mw-mov`. Four BREAKOUT slots and five BROKEN FANG slots give 45 tickets
+and nine modeled outcomes, each with probability `1/9`.
+
+| Field | Exact value |
+| --- | --- |
+| Input cost | `97/20` |
+| Gross EV | `6427/900` |
+| Net EV | `186383/30000` |
+| Expected profit | `40883/30000` |
+| Capital-inclusive return % | `186383/1455` |
+| Expected ROI % | `40883/1455` |
+| Worst modeled net receipt | `348/125` |
+
+Return rounds to `128.098282`, consistent with the first saved 2024 value
+`128.098`. The worst modeled receipt, 2.784, is below the 4.85 input cost.
+This checks the declared historical basket, without establishing float eligibility,
+listing availability or guaranteed profit.
+
+For the unchanged `st-ft-mw-mov` import:
+
+```text
+content_sha256 = eb585dd73d0495a08d584d9a2dc093bd37f7135666b6432b14d5bb24c5ab5267
+snapshot_id    = 957e7e50af90409e4153cb769c9dc00778cd872905b7ca3823cf5fbf307df37c
+```
+
+The original CRLF matrix's raw SHA-256 is
+`b7962f66689f395cb6da0858f1d69ff0035752d11aacebc4df458d786f489d41`.
+A Git LF checkout has a different raw digest but the same normalized identities.
+
 ## Budgets, completion and output
 
 | Search budget | Default | CLI maximum |
@@ -210,9 +252,21 @@ Existing files are never overwritten. Output parents must exist; protected
 `historical`/`.git` components and resolved protected paths are rejected. Writes
 use exclusive temporary files, a default 32 MiB byte cap (maximum 256 MiB), and
 atomic publication as a new hard link only after serialization/close succeed.
+The exclusively created temporary file stays open through serialization; it is
+never reopened by name for truncation. Final-component symlinks (including dangling
+ones), hard links and all other existing destinations are refused. Windows uses
+a native directory handle to resolve parent junctions/reparse points before the
+protected-path check; POSIX uses the canonical existing parent.
 Competing existing destinations cannot be replaced. Failure cleans the temporary
 file; filesystems must support hard links or report a clear error. Input files
 are never opened for writing.
+
+Use a trusted, stable output directory. The pathname-based publication/protection
+checks are not a security boundary against another process that can rename or
+replace entries in that directory or its parents. Atomic visibility does not
+promise crash durability: no fsync/FlushFileBuffers transaction is implemented.
+Forced process termination can leave an unpublished temporary file. A cleanup
+failure after successful publication can leave both names for a completed file.
 
 Identities, exact values and ranking are deterministic. Actual input path/raw
 digest and measured elapsed time are audit diagnostics that can differ. Time-

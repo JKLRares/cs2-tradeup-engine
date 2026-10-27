@@ -1,132 +1,186 @@
-# Historical Trade-Up Search Engine
+# CS2 Trade-Up Engine
 
-**Author:** Rareș Constantinescu
+**Author**: Rares Constantinescu
 
-An entirely offline C++20 application for inspecting historical trade-up prices,
-evaluating quantity contracts, and searching restricted combinatorial domains with
-exact arithmetic and explicit resource budgets.
+A [trade-up contract](https://help.steampowered.com/en/faqs/view/0151-608B-BCAA-D7D5)
+exchanges Counter-Strike weapon skins for a higher-rarity result. The possible
+results have different values, so comparing their expected return with the cost
+of the inputs matters.
 
-The personal prototype began in 2023 and the Sheets/C++ workflow expanded in 2024.
-The 2026 implementation adds independently verified reference and optimized
-engines, content-derived dataset identities and a practical CLI. Original programs
-and spreadsheets remain unaltered evidence, documented separately in the
-[historical baseline](docs/historical-baseline.md).
+This offline C++20 application analyzes historical ten-skin combinations. It lets
+you evaluate a contract or search combinations, compare modeled returns, and
+inspect the results with their probabilities and assumptions.
 
-## Build on Windows
+You can:
 
-The verified direct build uses MSYS2 UCRT64 GCC 14.2.0. There are no third-party
-libraries, downloads, accounts or network services. Python 3.10+ is used for
-verification, not application execution. From the repository root in PowerShell:
+- Load the preserved 2024 price matrix or a custom offline UTF-8 catalog.
+- Calculate input cost, modeled outcome probabilities, expected return on investment
+  (ROI) and the worst modeled receipt.
+- Search the supported **5/5** and **6/4** input-wear profiles.
+- Rank results by expected ROI or profit and filter by return threshold or cost.
+- Export exact JSON/CSV values with identities, provenance and completion status.
+- Set evaluation, work, time and storage budgets, with explicit incomplete results.
+
+## Quick start
+
+From the repository root in Windows PowerShell, with MSYS2 UCRT64 GCC installed:
 
 ```powershell
 $env:PATH = 'C:\msys64\ucrt64\bin;' + $env:PATH
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build_cli.ps1 -Configuration Release
-$app = '.\.dist\milestone4\tradeup_Release.exe'
-& $app --help
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build_cli.ps1 -Configuration Release -BuildDirectory build/direct
+$app = '.\build\direct\tradeup_Release.exe'
+$matrix = '.\historical\2024\most recent version i think\input.txt'
+& $app replay --input $matrix --details
 ```
 
-Execution-policy bypass applies only to the child process. `-Compiler` and
-`-BuildDirectory` accept explicit paths. Keep the compiler's runtime DLL directory
-on PATH. Debug builds use `-Configuration Debug` and produce `tradeup_Debug.exe`.
-CMake targets are supplied; CMake/CTest are unavailable in this environment, so
-the direct build is the verified route.
+This builds the application and replays an authentic saved historical contract.
+See [toolchain setup and alternative builds](docs/building.md) if GCC is missing
+or installed elsewhere. Running the application needs no Python or spreadsheet
+packages. Use `& $app --help` for all commands and options.
 
-## Inspect and replay authentic historical data
+## A historical example
+
+The replay evaluates **`b002:5,b029:5`** in **`st-ft-mw-mov`**: five BREAKOUT
+higher-wear inputs and five BROKEN FANG lower-wear inputs, using preserved prices.
+
+| Metric | Modeled value |
+| --- | ---: |
+| Input cost | 4.85 |
+| Return, including capital | 128.098282% |
+| Expected ROI | 28.098282% |
+| Worst net receipt | 2.784 |
+
+Return and ROI are rounded here; the exact return is `186383/1455` percent.
+The worst receipt is below the input cost: positive expected ROI does **not**
+guarantee profit. Currency and the original quote timestamps are unknown.
+
+To evaluate the same allocation explicitly:
 
 ```powershell
-$matrix = '.\historical\2024\most recent version i think\input.txt'
-& $app scenarios
-& $app profiles
-& $app inspect --input $matrix --scenario st-ft-mw-mov
-& $app replay --input $matrix --details
-& $app eval --input $matrix --scenario 'StatTrak FT MW mov' --contract 'b002:5,b029:5'
+& $app eval --input $matrix --scenario st-ft-mw-mov --contract 'b002:5,b029:5'
 ```
 
-The preserved 55×58 matrix supplies all 3,190 prices. All twelve scenario mappings
-come from source/workbook evidence. Odd/even buckets represent lower/higher input
-wear; outcomes use the historical higher-wear quote basket. `inspect --json
---matrix` exposes every original price and selected-scenario metadata.
+## How it works
 
-Replay uses five BREAKOUT higher-category inputs (`b002`) and five BROKEN FANG
-lower-category inputs (`b029`). It reproduces cost **4.85**, exact modeled return
-**186383/1455% ≈ 128.098282%**, and expected ROI **≈ 28.098282%** through the actual
-import/evaluation path. This does not establish exact float feasibility, purchase
-availability or guaranteed profit.
+Local prices and scenario metadata → validated data model → exact evaluation
+and optimized search → ranked results and exports.
+
+The importer checks prices, collection mappings and provenance. Evaluation combines
+each input collection's modeled outcomes and compares expected receipts with cost.
+Search groups interchangeable inputs into quantities rather than testing every
+ordering of ten skins. Exact fractions keep rounding out of qualification and
+ranking; outcome details remain available for inspection.
 
 ## Search, filter and export
 
-```powershell
-& $app search --input $matrix --profile '5/5' --max-evaluations 1000 --top 3 `
-    --output '.\.dist\milestone4\historical-prefix.json'
-$LASTEXITCODE
-
-& $app search --input '.\examples\synthetic-equal-returns.tsv' --format catalog-v1 `
-    --min-roi 15 --max-cost 10 --sort profit --top 3 `
-    --output '.\.dist\milestone4\synthetic-results.csv'
-```
-
-The historical command deliberately bounds a prefix: exit code **3** means an
-incomplete budget-limited search. The synthetic example completes with 405
-distinct equal-return contracts. Choose new export paths on repeated runs:
-existing files are never overwritten. JSON and CSV preserve exact fractions,
-identities, policies, provenance, limits and completion status. `--details` adds
-the full modeled outcome distribution.
-
-`--min-return` defaults to strict `>115`, equivalent to expected ROI `>15%`.
-`--min-roi` is an alternative. `--max-cost` filters retained results inclusively
-after search. Ranking uses exact expected ROI or profit, then canonical identity.
-`--top` limits human display only; machine output contains every matching retained
-result. Equal returns never merge distinct contracts.
-
-Both profiles require ten inputs and two to five active buckets, with 5/5 or 6/4
-lower/higher wear quantities. They are restrictions, not unrestricted searches.
-The reference enumerator supports twelve catalog buckets; the optimized engine
-supports larger catalogs with explicit budgets. A 58-bucket 5/5 domain has
-80,723,385 contracts. Loading it does not mean completing its search, and default
-commands never launch an unbounded traversal.
-
-The documented `tradeup-catalog-v1` UTF-8 TSV format also supports local declared
-catalogs with arbitrary positive modeled outcome counts and explicit provenance.
-SHA-256 snapshot identities bind normalized prices and scenario/policy metadata,
-independently of filesystem paths.
-
-## Verification and documentation
+These examples use a clearly labeled **synthetic** catalog, completing with 405
+distinct contracts under 5/5 or 390 under 6/4:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_cli.ps1 -Configuration Debug
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_cli.ps1 -Configuration Release
+$catalog = '.\examples\synthetic-equal-returns.tsv'
+& $app search --input $catalog --format catalog-v1 --profile '5/5' `
+    --min-roi 15 --max-cost 10 --sort profit --top 3
+& $app search --input $catalog --format catalog-v1 --profile '6/4' --top 3
 ```
 
-These run all Milestone 1–3 regressions, the reconstructed workbook-ledger check,
-application C++ tests and independent CLI tests. Earlier direct scripts and
-bounded synthetic benchmarks remain available. Historical binaries are never
-compiled, linked or run.
+Both profiles use ten inputs and two to five active buckets. The split specifies
+lower/higher input wear quantities; it does not establish exact float eligibility.
+Default qualification is strictly return **>115%**, equivalent to expected ROI
+**>15%**. Cost filtering happens after search. `--top` limits human rows only.
 
-The modernization was developed with AI assistance. Mathematical and verification
-claims are backed by the checked-in specifications, independent oracles and
-recorded results.
+A deliberately incomplete historical prefix:
 
-- [CLI, local formats, identity, export and budget semantics](docs/offline-cli.md)
-- [Milestone 4 integration and verification report](docs/milestone-4-report.md)
-- [Optimized engine and completeness proofs](docs/optimized-engine.md)
-- [Measured benchmarks and their limits](docs/milestone-3-report.md)
-- [Reference engine and arithmetic limits](docs/reference-engine.md)
-- [Mathematical model](docs/mathematical-model.md)
-- [Historical origins and evidence](docs/historical-baseline.md)
+```powershell
+& $app search --input $matrix --max-evaluations 1000 --time-ms 60000 --top 3
+$LASTEXITCODE # 3: incomplete search; retained results are partial
+```
 
-## Limits
+Only `complete` asserts coverage of the selected domain. Budget and arithmetic
+interruptions are explicit; a bounded prefix does not establish global rankings.
 
-Calculations retain `historical-quote-tickets-v1` and the historical proportional
-13% deduction. Currency, actual quote timestamps, exact floats, listing supply and
-independently verified current game mechanics remain unknown. Composite averages
-and ratio estimates are labeled. Missing prices are rejected; explicitly modeled
-zero-valued outcomes keep their probability mass.
+```powershell
+& $app replay --input $matrix --details --output '.\build\replay.json'
+& $app search --input $catalog --format catalog-v1 --output '.\build\synthetic.csv'
+```
 
-Unsupported checked signed-64-bit arithmetic fails explicitly. Search results
-distinguish complete coverage from evaluation, work, time, storage and arithmetic
-interruptions. Exports are bounded and published only after successful
-serialization. Sanitizer runtimes remain unavailable; no sanitizer run is claimed.
+Choose fresh output names on repeats: existing files are never overwritten.
+JSON/CSV include exact fraction strings, every matching retained result, policies,
+provenance, budgets and completion status. Publication requires same-directory
+hard-link support. See the [CLI and input/export formats](docs/offline-cli.md).
 
-Release automation, CI deployment and further portability validation remain
-outside this milestone. No live-market, account or automated-trading features
-are provided.
+## Architecture
+
+- **Reference engine:** a small exhaustive correctness baseline for catalogs of
+  up to twelve buckets, with checked rational arithmetic and full evaluations.
+- **Optimized engine:** generates quantity combinations directly, reuses collection
+  summaries, applies exact scaled-integer decisions and optional proved bounds,
+  and retains compact results with full outcome expansion on demand.
+- **Offline CLI:** validates datasets, reconstructs historical metadata, derives
+  SHA-256 identities, ranks results and writes JSON/CSV.
+
+Distinct contracts remain distinct even when their expected returns match.
+See the [reference completeness proof](docs/reference-engine.md) and
+[optimized search specification](docs/optimized-engine.md).
+
+## Measured performance
+
+On selected, identical **synthetic 12-bucket mixed workloads**, the final recorded
+run measured **7.10× / 7.79×** faster expanded searches (5/5 / 6/4), and
+**20.18× / 20.29×** faster compact searches. Expanded mode materializes the same
+full qualifying outcomes as the reference; compact mode defers those details.
+
+These are ratios of median search times over five samples on Windows 10,
+i7-9700, GCC 14.2.0, `-O2 -DNDEBUG`, seed 20261026. Pruning reduced candidates
+but slowed one integer workload by about 12% (17% in the original run).
+The [benchmark evidence](docs/benchmarks.md) separates the original measurements
+from the final rerun and documents workloads, output costs and variability.
+These ratios do not predict every search. The full 58-bucket historical mixed
+domain has not been exhaustively searched.
+
+## Build and verification
+
+Local builds/tests passed on Windows 10 with MSYS2 UCRT64 GCC 14.2.0 and
+CMake 3.31.10. Python 3.10+ and its standard library are used for verification.
+Keep the compiler's runtime DLL directory on PATH; the executable is not a
+standalone distribution package.
+
+With CMake available, a Release build and the full test suite are:
+
+```powershell
+cmake -S . -B build/release -G 'MinGW Makefiles' -DCMAKE_BUILD_TYPE=Release -DTRADEUP_REQUIRE_PYTHON=ON
+cmake --build build/release --parallel 4
+ctest --test-dir build/release --output-on-failure
+```
+
+Tests cover exact fixtures, exhaustive small searches, independent Python
+Fraction/Cartesian comparisons, historical reconstruction and adversarial CLI
+and export behavior. [Verification details](docs/verification.md) distinguish
+executed local checks from pending hosted CI and sanitizer runs.
+[GitHub Actions](.github/workflows/verify.yml) configures Linux Debug/Release,
+Linux ASan+UBSan and Windows UCRT64 Debug/Release; hosted success is not claimed.
+See [building](docs/building.md) for Debug, direct GCC and Linux commands.
+
+## Background
+
+The project began as an independently developed personal high-school trade-up
+finder in 2023–2024. Google Sheets organized prices and C++ searched selected wear
+splits. Original code, workbooks and data remain preserved in `historical/`,
+separate from the modern implementation. The [historical baseline](docs/historical-baseline.md)
+documents the surviving evidence and its provenance.
+
+## Model and limitations
+
+The application uses `historical-quote-tickets-v1`, a proportional 13% deduction
+and a higher-wear quote basket with labeled composite/estimated values.
+The [mathematical model](docs/mathematical-model.md) states those assumptions.
+It does not verify current CS2 mechanics, exact floats, output wear feasibility
+or actual listing availability. There are no live prices, account connections
+or automated trading, and no guarantee of profit.
+
+The historical 5/5 domain contains 80,723,385 contracts. Supporting that dataset
+does not imply completing its search. Unsupported signed-64-bit intermediates
+fail explicitly; storage/work budgets and cooperative time checks are not
+whole-process memory caps or hard deadlines.
+
+No license has been selected. Public distribution still requires the author's
+[license choice and historical-data provenance review](docs/distribution.md).

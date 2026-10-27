@@ -1,8 +1,9 @@
 #include "tradeup/application.hpp"
 
 #include <algorithm>
+#include <array>
 #include <charconv>
-#include <fstream>
+#include <cerrno>
 #include <random>
 #include <streambuf>
 
@@ -103,16 +104,108 @@ bool protected_path(const std::filesystem::path& path) {
     }
     return false;
 }
-bool create_exclusive(const std::filesystem::path& path) {
+std::filesystem::path resolved_output_parent(const std::filesystem::path& parent) {
 #ifdef _WIN32
-    const auto handle = CreateFileW(path.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
-    if (handle == INVALID_HANDLE_VALUE) { return false; }
-    CloseHandle(handle); return true;
+    // Resolve directory reparse points through a native directory handle. The
+    // verified MinGW library's canonical(existing_directory) fails here.
+    const auto handle = CreateFileW(parent.c_str(), FILE_READ_ATTRIBUTES,
+        FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS, nullptr);
+    if (handle == INVALID_HANDLE_VALUE) {
+        throw std::filesystem::filesystem_error("cannot open output parent", parent,
+            std::error_code(static_cast<int>(GetLastError()), std::system_category()));
+    }
+    std::array<wchar_t, 32768> text{};
+    const auto length = GetFinalPathNameByHandleW(handle, text.data(), static_cast<DWORD>(text.size()),
+        FILE_NAME_NORMALIZED|VOLUME_NAME_DOS);
+    const auto error = GetLastError(); CloseHandle(handle);
+    if (length == 0 || length >= text.size()) {
+        throw std::filesystem::filesystem_error("cannot resolve output parent", parent,
+            std::error_code(static_cast<int>(length == 0 ? error : ERROR_BUFFER_OVERFLOW), std::system_category()));
+    }
+    return std::filesystem::path(std::wstring(text.data(), length));
 #else
-    const auto fd = ::open(path.c_str(),O_WRONLY|O_CREAT|O_EXCL,0600);
-    if (fd < 0) { return false; } ::close(fd); return true;
+    return std::filesystem::canonical(parent);
 #endif
 }
+// Keep the exclusively created file open until serialization finishes. Reopening
+// by name would permit a symlink substitution between creation and truncation.
+class ExclusiveFileBuffer final : public std::streambuf {
+public:
+    ExclusiveFileBuffer() { setp(storage_.data(), storage_.data()+storage_.size()); }
+    ExclusiveFileBuffer(const ExclusiveFileBuffer&) = delete;
+    ExclusiveFileBuffer& operator=(const ExclusiveFileBuffer&) = delete;
+    bool open(const std::filesystem::path& path) {
+#ifdef _WIN32
+        handle_ = CreateFileW(path.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
+        return handle_ != INVALID_HANDLE_VALUE;
+#else
+        descriptor_ = ::open(path.c_str(), O_WRONLY|O_CREAT|O_EXCL, 0600);
+        return descriptor_ >= 0;
+#endif
+    }
+    ~ExclusiveFileBuffer() override { close_impl(); }
+    void close() {
+        try { if (pptr() != pbase()) { sync(); } }
+        catch (...) { close_impl(); throw; }
+        if (!close_impl()) { throw std::runtime_error("cannot finish export file"); }
+    }
+private:
+    std::array<char, 8192> storage_{};
+#ifdef _WIN32
+    HANDLE handle_ = INVALID_HANDLE_VALUE;
+    bool close_impl() noexcept {
+        if (handle_ == INVALID_HANDLE_VALUE) { return true; }
+        const auto handle = handle_; handle_ = INVALID_HANDLE_VALUE;
+        return CloseHandle(handle) != 0;
+    }
+#else
+    int descriptor_ = -1;
+    bool close_impl() noexcept {
+        if (descriptor_ < 0) { return true; }
+        const auto descriptor = descriptor_; descriptor_ = -1;
+        return ::close(descriptor) == 0;
+    }
+#endif
+    std::streamsize write_bytes(const char* text, const std::streamsize count) {
+        std::streamsize written = 0;
+        while (written < count) {
+            const auto chunk = static_cast<std::size_t>(std::min<std::streamsize>(count-written, 1024*1024));
+#ifdef _WIN32
+            DWORD actual = 0;
+            if (!WriteFile(handle_, text+written, static_cast<DWORD>(chunk), &actual, nullptr) || actual == 0) {
+                throw std::runtime_error("output write failed");
+            }
+#else
+            const auto actual = ::write(descriptor_, text+written, chunk);
+            if (actual < 0 && errno == EINTR) { continue; }
+            if (actual <= 0) { throw std::runtime_error("output write failed"); }
+#endif
+            written += static_cast<std::streamsize>(actual);
+        }
+        return written;
+    }
+    int sync() override {
+        const auto count = pptr()-pbase();
+        write_bytes(pbase(), count);
+        setp(storage_.data(), storage_.data()+storage_.size());
+        return 0;
+    }
+    std::streamsize xsputn(const char* text, const std::streamsize count) override {
+        std::streamsize written = 0;
+        while (written < count) {
+            if (pptr() == epptr()) { sync(); }
+            const auto chunk = std::min<std::streamsize>(count-written, epptr()-pptr());
+            std::copy_n(text+written, chunk, pptr());
+            pbump(static_cast<int>(chunk)); written += chunk;
+        }
+        return written;
+    }
+    int_type overflow(const int_type c) override {
+        if (traits_type::eq_int_type(c, traits_type::eof())) { return traits_type::not_eof(c); }
+        sync(); *pptr() = traits_type::to_char_type(c); pbump(1); return c;
+    }
+};
 } // namespace
 void write_bounded(std::ostream& sink, const std::size_t max_bytes, const std::function<void(std::ostream&)>& writer) {
     LimitedBuffer buffer(sink.rdbuf(),max_bytes);
@@ -121,26 +214,29 @@ void write_bounded(std::ostream& sink, const std::size_t max_bytes, const std::f
 }
 void write_export(const std::filesystem::path& path, const std::size_t max_bytes, const std::function<void(std::ostream&)>& writer) {
     if (path.empty() || path.filename().empty() || protected_path(path)) { throw std::invalid_argument("output must be a new file outside historical materials and .git"); }
-    const auto target = std::filesystem::weakly_canonical(std::filesystem::absolute(path));
+    // Resolve parent aliases, but never follow an existing final-component link.
+    const auto absolute = std::filesystem::absolute(path);
+    const auto target = resolved_output_parent(absolute.parent_path()) / absolute.filename();
     if (protected_path(target)) { throw std::invalid_argument("resolved output is inside protected historical materials or .git"); }
-    if (std::filesystem::exists(target)) { throw std::invalid_argument("output already exists; choose a new path (existing files are never overwritten)"); }
+    if (std::filesystem::symlink_status(target).type() != std::filesystem::file_type::not_found) { throw std::invalid_argument("output already exists; choose a new path (existing files are never overwritten)"); }
     if (!std::filesystem::is_directory(target.parent_path())) { throw std::invalid_argument("output parent directory does not exist"); }
     std::filesystem::path temporary;
+    ExclusiveFileBuffer buffer;
     std::random_device random;
     for (int i = 0; i < 16; ++i) {
         auto candidate = target.parent_path() / (".tradeup-export-"+std::to_string(random())+"-"+std::to_string(random())+".tmp");
-        if (create_exclusive(candidate)) { temporary = std::move(candidate); break; }
+        if (buffer.open(candidate)) { temporary = std::move(candidate); break; }
     }
     if (temporary.empty()) { throw std::runtime_error("cannot create temporary export file in output directory"); }
     try {
-        std::ofstream file(temporary,std::ios::binary|std::ios::trunc);
-        if (!file) { throw std::runtime_error("cannot open temporary export file"); }
-        write_bounded(file,max_bytes,writer); file.close();
-        if (!file) { throw std::runtime_error("cannot finish export file"); }
+        std::ostream file(&buffer);
+        file.exceptions(std::ios::badbit|std::ios::failbit);
+        write_bounded(file,max_bytes,writer); buffer.close();
         // create_hard_link fails if the destination exists: no overwrite race.
         std::filesystem::create_hard_link(temporary,target);
         std::filesystem::remove(temporary);
     } catch (...) {
+        try { buffer.close(); } catch (...) { /* Preserve the original diagnostic. */ }
         std::error_code ignored; std::filesystem::remove(temporary,ignored); throw;
     }
 }

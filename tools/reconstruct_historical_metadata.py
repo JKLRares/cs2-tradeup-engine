@@ -17,6 +17,8 @@ import re
 import xml.etree.ElementTree as ET
 import zipfile
 
+from historical_integrity import archive_form
+
 ROOT = Path(__file__).resolve().parents[1]
 NS = {'s': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
 REF = re.compile(r'(\$?)([A-Z]{1,3})(\$?)([0-9]+)')
@@ -40,11 +42,10 @@ def coordinates(address):
 
 def reconstruct(historical):
     manifest = json.loads((ROOT / 'tests/fixtures/historical_manifest.json').read_text())['files']
-    expected = {entry['path']: entry['sha256'] for entry in manifest}
+    expected = {entry['path']: entry for entry in manifest}
     for relative in ('supporting/excel/CASES AUTO.xlsx', '2024/most recent version i think/input.txt',
                      '2024/most recent version i think/main.cpp'):
-        if hashlib.sha256((historical / relative).read_bytes()).hexdigest() != expected['historical/' + relative]:
-            raise ValueError(f'fixed 2024 mapping requires preserved evidence bytes: {relative}')
+        archive_form((historical / relative).read_bytes(), expected['historical/' + relative])
     book = historical / 'supporting/excel/CASES AUTO.xlsx'
     with zipfile.ZipFile(book) as archive:
         tree = ET.fromstring(archive.read('xl/worksheets/sheet1.xml'))

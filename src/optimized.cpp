@@ -306,12 +306,12 @@ OptimizedResult OptimizedEngine::search(const SearchProfile profile, const std::
                                 tick();
                                 const auto end = position < nl ? nl : size;
                                 if (position + 1 == end) {
-                                    active[position].quantity = left;
+                                    active.at(position).quantity = left;
                                     if (end == nl) { self(self, nl, higher); } else { emit(size); }
                                 } else {
                                     const auto remaining = static_cast<int>(end - position - 1);
                                     for (int q = 1; q <= left - remaining; ++q) {
-                                        active[position].quantity = q; self(self, position + 1, left - q);
+                                        active.at(position).quantity = q; self(self, position + 1, left - q);
                                     }
                                 }
                             };
@@ -325,7 +325,9 @@ OptimizedResult OptimizedEngine::search(const SearchProfile profile, const std::
                             const auto remaining = end - position;
                             const auto& indices = sides_[side];
                             for (auto i = begin; i + remaining <= indices.size(); ++i) {
-                                active[position].bucket = indices[i];
+                                // Keep the recursive position bound locally checked, including
+                                // aggressively inlined Release builds (-O3 array-bounds analysis).
+                                active.at(position).bucket = indices[i];
                                 if (position + 1 == size) { tick(); support(); }
                                 else if (position + 1 == nl) { self(self, nl, 0); }
                                 else { self(self, position + 1, i + 1); }

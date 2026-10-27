@@ -4,7 +4,7 @@ This baseline reconstructs local files without executing historical programs. Pa
 
 ## Provenance and preservation
 
-The repository was already on `modernization`, with `main` also present. Its three existing archival commits are dated 2026-10-22; those dates document archiving, not original development. No metadata was changed.
+The three archival commits dated 2026-10-22 document preservation, not original development. Their metadata has not been rewritten.
 
 There are 33 preserved files: 11 tracked and 22 untracked or ignored. Each repository copy matched its corresponding file in the independent archive during baseline capture. The manifest records all 33, including binary and damaged files. Optional local files are not required in a clean public checkout, but are verified whenever present.
 
@@ -84,15 +84,15 @@ For workbook collection block `c=0..28`, columns are selected by one-based colum
 
 `c++ 5 higher quality numbers.txt`, `final version.txt`, and `Copy.cpp` expect `n`, then six vectors of length `n`: output slots `a,b,c,d,e`, followed by input unit prices `f`. Files were named `date.in/date.out` in 2023 and `input.txt/www.txt` in `Copy.cpp`.
 
-The surviving 2024 matrix cannot be fed to these parsers as if the formats were interchangeable. A future converter can select the five output rows and cost row from a declared scenario, preserving the data. No converter or historical search executable is supplied in Milestone 1.
+The surviving 2024 matrix cannot be fed to these parsers as if the formats were interchangeable. A six-vector converter would need to select the five output rows and cost row from a declared scenario. No such converter or historical executable is shipped; the [modern CLI](offline-cli.md) imports the fixed 2024 matrix directly.
 
 ### Compatibility decisions
 
 | Material | Modern use |
 | --- | --- |
-| 2024 `input.txt` | Direct read-only baseline fixture; future import requires its 29-collection mapping, scenario table, and provenance sidecar. It is not self-describing. |
+| 2024 `input.txt` | Read-only application input using the fixed [29-collection mapping and cell ledger](offline-cli.md#historical-matrix). The matrix is not self-describing. |
 | Twelve source calls | Direct scenario definitions; machine-readable transcription in `tests/fixtures/scenarios.json`. |
-| Valid XLSX workbooks | Read-only XML/cached-value evidence now; require a local converter for future application input. Recalculation is not performed by this baseline. |
+| Valid XLSX workbooks | Read-only XML/cached-value evidence for metadata reconstruction. General runtime XLSX import and formula recalculation are not provided. |
 | Readable Apps Script | Metadata/workflow reference; no Google account access or execution needed. |
 | Numerical output fragments | Evidence only; partial rows and ambiguous identifiers prevent reliable general import. |
 | `www.txt` | Optional regression evidence; human labels and zero padding make it unsuitable as a canonical dataset. |

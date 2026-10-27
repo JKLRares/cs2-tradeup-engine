@@ -16,6 +16,8 @@ import unittest
 import xml.etree.ElementTree as ET
 import zipfile
 
+from historical_integrity import archive_form
+
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "tests" / "fixtures"
 NS = {"s": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
@@ -75,10 +77,11 @@ class Baseline(unittest.TestCase):
                 continue
             with self.subTest(path=entry["path"]):
                 data = path.read_bytes()
-                self.assertEqual(len(data), entry["bytes"])
-                self.assertEqual(hashlib.sha256(data).hexdigest(), entry["sha256"])
+                authenticated = archive_form(data, entry, allow_git_lf=not REQUIRE_LOCAL)
+                self.assertEqual(len(authenticated), entry["bytes"])
+                self.assertEqual(hashlib.sha256(authenticated).hexdigest(), entry["sha256"])
                 if INDEPENDENT is not None:
-                    self.assertEqual(data, (INDEPENDENT / Path(*relative.parts[1:])).read_bytes())
+                    self.assertEqual(authenticated, (INDEPENDENT / Path(*relative.parts[1:])).read_bytes())
                 present += 1
         print(f"Integrity: {present} matched, {absent_local} optional local files absent")
 

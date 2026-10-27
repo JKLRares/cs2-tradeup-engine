@@ -1,6 +1,6 @@
 # C++20 reference engine
 
-The library implements the [approved mathematical model](mathematical-model.md) for explicitly bounded catalogs. It is a correctness baseline, with no optimized search, market integration, or application CLI. Historical snapshots are not build inputs.
+The library implements the [mathematical model](mathematical-model.md) for explicitly bounded catalogs. It is the correctness baseline for the separate [optimized engine](optimized-engine.md); the [offline CLI](offline-cli.md) handles data import and presentation. The reference library has no I/O or market integration, and historical programs are never build targets.
 
 ## Architecture and API
 
@@ -114,7 +114,7 @@ Distinct qualifying contracts remain distinct even when all prices, probabilitie
 
 Outcome sets are shared at collection level, preventing conflicting copies for the two wear buckets. `declared_outcomes_complete` concerns the declared model, not independent real-game coverage. Missing required outcomes or prices must be rejected, not renormalized away.
 
-The six numerical baseline fixtures are checked against the compiled library, including the first preserved 2024 output. Its exact return remains `186383/1455` percent. No full spreadsheet converter or general historical importer is supplied. The historical matrix's averaged slots, price estimates, unknown timestamps/currency, and unsupported float assumptions remain as documented in Milestone 1.
+The six numerical baseline fixtures are checked against the compiled library, including the first preserved 2024 output. Its exact return remains `186383/1455` percent. The application imports the fixed 2024 matrix; there is no general spreadsheet converter. The historical matrix's averaged slots, price estimates, unknown timestamps/currency, and unsupported float assumptions are documented in the [historical baseline](historical-baseline.md).
 
 ## Verification design
 
@@ -126,4 +126,4 @@ The six numerical baseline fixtures are checked against the compiled library, in
 
 For a 2×2 catalog, nonnegative per-side allocations give `6*6=36` contracts. For 1×4, there are `C(8,3)=56`. For 3×3 under 5/5, there are `C(7,2)^2 - C(4,2)^2 = 441-36=405` after excluding six-active-bucket vectors. Under 6/4 the analogous count is `28*15 - 10*3=390`. These are independent count checks, not assumptions borrowed from the original loops.
 
-The final adversarial review tested delimiter collisions, missing/duplicate outcomes, input-order perturbations, probabilities with shared collections, negative and nonfinite price text, extreme arithmetic, exact threshold neighbors, and budgets exactly at and below completion. No sanitizer run or benchmark is claimed. See [milestone-2-report.md](milestone-2-report.md) for actual environment/results and the selective file list.
+Adversarial tests cover delimiter collisions, missing/duplicate outcomes, input-order perturbations, probabilities with shared collections, negative and nonfinite price text, extreme arithmetic, exact threshold neighbors, and budgets exactly at and below completion. See [verification results](verification.md#recorded-local-results) for executed configurations and platform limits, and [benchmarks](benchmarks.md) for measured performance. Sanitizer execution remains pending.

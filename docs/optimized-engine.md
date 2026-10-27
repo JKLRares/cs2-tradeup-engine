@@ -1,4 +1,4 @@
-# Exact optimized search engine (Milestone 3)
+# Exact optimized search engine
 
 `OptimizedEngine` is a separate C++20 search implementation for the existing
 [mathematical model](mathematical-model.md). It consumes owned, local, declared
@@ -76,6 +76,10 @@ and duplicate-free before pruning. Generated recursion depth is bounded by five
 support positions and five composition positions, independent of catalog size.
 Every support selection iteration and composition recursion consumes a work unit.
 No entire candidate list or collection-probability table per candidate is stored.
+
+Recursive candidate-array accesses use `std::array::at` to enforce the fixed
+five-entry bound locally. This also permits the verified GCC `-O3` Release build
+without disabling its array-bounds diagnostics; valid traversal positions are 0–4.
 
 Order is deterministic by support sizes, sorted wear supports, and ascending
 composition quantities. It is deliberately not the reference traversal order.
@@ -229,6 +233,6 @@ adds adversarial cases; it does not use production enumeration for expectations.
 `tools/verify_optimized.ps1` preserves direct GCC builds and runs the complete
 previous suite before the new checks. Optional `-Benchmarks` builds/runs bounded
 Release measurements. CMake adds separate optimized/test/benchmark targets but
-does not compile historical sources. See [the report](milestone-3-report.md) for
-executed checks, actual numbers, performance, environment limitations, and manual
-selective staging instructions.
+does not compile historical sources. See [verification](verification.md) for
+executed configurations and platform limits, and [benchmarks](benchmarks.md) for
+workloads, measurements and pruning ablations.

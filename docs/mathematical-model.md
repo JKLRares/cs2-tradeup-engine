@@ -1,6 +1,6 @@
-# Mathematical specification for the first reference milestone
+# Mathematical model
 
-Status: approved mathematical baseline, now implemented by the Milestone 2 reference library. [Reference engine documentation](reference-engine.md) defines its concrete API, arithmetic limits, enumeration proof, and verification. This is a versioned model reconstructed from local historical evidence, not an independently certified statement of game rules. Current CS2 mechanics are outside scope.
+The [reference engine](reference-engine.md) and [optimized engine](optimized-engine.md) implement this versioned model reconstructed from local historical evidence. Their documentation defines the APIs, arithmetic limits, completeness arguments and verification. This model is not an independently certified statement of game rules. Current CS2 mechanics are outside scope.
 
 ## Domain and input meaning
 
@@ -27,7 +27,7 @@ p_(c,o) = gross sale valuation of modeled outcome o
 
 Outcome sets are unique by `(collection_id, outcome_id)`. The two wear buckets of one collection must not create duplicate stochastic outcomes. Collections may have any positive modeled outcome count; five is a historical storage constraint, not a mathematical limit.
 
-For historical compatibility, `O_c` initially means the non-padding quote slots from the declared scenario. Some slots are composite estimates, notably the averaged Revolver slot. They must be labeled as such. This makes the computation exact for a stated quote basket; it does not make the basket an exact real-game outcome distribution.
+For historical compatibility, `O_c` means the non-padding quote slots from the declared scenario. Some slots are composite estimates, notably the averaged Revolver slot. They must be labeled as such. This makes the computation exact for a stated quote basket; it does not make the basket an exact real-game outcome distribution.
 
 ## Probability policy: `historical-quote-tickets-v1`
 
@@ -81,9 +81,9 @@ This condition differs from `N>C`. Even `W>C` would be conditional on complete o
 
 Report three different levels explicitly: preserved historical estimates, mathematically validated values under the declared quote model, and exact float-dependent values if sufficient data and a supported rules policy are later supplied. None should be described as actual purchasing availability.
 
-## Initial bounded search domain
+## Bounded search profiles
 
-The proposed default historical profile is `historical-5-5-up-to-5-buckets-v1`:
+The default historical profile is `historical-5-5-up-to-5-buckets-v1`:
 
 | Constraint | Definition |
 | --- | --- |
@@ -100,11 +100,11 @@ The proposed default historical profile is `historical-5-5-up-to-5-buckets-v1`:
 | Qualification | `R>115` for historical comparisons; a different threshold must be an explicit query parameter. |
 | Evaluation limit | Small explicitly bounded catalogs/candidate budgets for reference verification. No automatic full 58-bucket search. |
 
-The 2023 6/4 strategy can be a separately named profile with six lower-category and four higher-category inputs and the same explicit support cap. It is not mixed into the 5/5 results. An unrestricted ten-input search would be a third, larger domain, requiring separate coverage claims.
+The 2023 6/4 strategy is implemented as `historical-6-4-up-to-5-buckets-v1`, with six lower-category and four higher-category inputs and the same support cap. It is separate from the 5/5 results. An unrestricted ten-input search would be a third, larger domain, requiring separate coverage claims.
 
 The old program selected five indices even when some quantities were zero. The modern domain uses active buckets directly and does not require padding. This expresses the intended restriction without inheriting the loop omissions or redundant presentations. Exact reproduction of the old program's defective traversal is not a correctness target.
 
-A future reference enumerator should select each active support in strictly increasing bucket-ID order, choose strictly positive quantities for that support, and retain exactly those allocations satisfying the declared sums. For a bounded catalog, completeness follows because every valid contract has one support and one quantity tuple; uniqueness follows from that representation. A proof and exhaustive small-instance tests belong to Milestone 2, after implementation. No full historical completeness claim is made here.
+The reference enumerator visits quantity vectors in sorted bucket-ID order, retaining positive active quantities that satisfy the declared sums. Every valid contract has one support and one quantity tuple. The [reference completeness proof](reference-engine.md#completeness-and-uniqueness-argument) establishes coverage and uniqueness for bounded catalogs; the [optimized proof](optimized-engine.md#domain-and-direct-generation-proof) covers direct support/composition generation. Neither establishes completion of a mixed 58-bucket historical search.
 
 ## Identity and compact results
 
@@ -119,7 +119,7 @@ K_evaluation = (K_contract, probability_policy_id,
 
 Within a snapshot, bucket IDs encode the relevant collection/wear/rarity/variant and representative-choice semantics. Input order and zero padding do not affect identity. Changing a bucket, quantity, or scenario does. The snapshot binds prices and provenance; a changed price file is a different evaluation context. Exact listing contracts, if introduced later, need identities for their distinct float/price properties rather than pretending all listings are interchangeable.
 
-Use a deterministic serialization of stable IDs and positive integer quantities for future identifiers. Do not use process-dependent `std::hash` output as a persistent ID. One proposed encoding is a version prefix, SHA-256 snapshot ID, restricted-ASCII scenario ID, and sorted `b001:5,b029:5` pairs. The actual implementation and tests are deferred to Milestone 2.
+Canonical serialization uses `contract-v1|snapshot|scenario|b001:5,b029:5`, with restricted-ASCII context IDs and sorted positive quantities. Process-dependent `std::hash` values are never persistent IDs. The reference library accepts caller-bound snapshot IDs; the application derives SHA-256 snapshots from normalized content. See [contract identity](reference-engine.md#contract-and-evaluation-identity) and the [application byte encoding](offline-cli.md#sha-256-identity-specification).
 
 Distinguish four cases:
 
