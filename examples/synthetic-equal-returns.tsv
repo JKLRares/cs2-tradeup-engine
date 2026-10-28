@@ -1,0 +1,14 @@
+tradeup-catalog-v1
+# Synthetic test/example values; these are not historical market quotes.
+scenario	synthetic-equal	Synthetic equal returns
+valuation	synthetic-basket-v1
+unit	synthetic-unit
+collection	c	Synthetic collection
+outcome	c	o	100	synthetic	Local synthetic example
+bucket	b001	c	L	1	synthetic	Local synthetic example	representative	Lower one
+bucket	b002	c	L	1	synthetic	Local synthetic example	representative	Lower two
+bucket	b003	c	L	1	synthetic	Local synthetic example	representative	Lower three
+bucket	b004	c	H	1	synthetic	Local synthetic example	representative	Higher one
+bucket	b005	c	H	1	synthetic	Local synthetic example	representative	Higher two
+bucket	b006	c	H	1	synthetic	Local synthetic example	representative	Higher three
+limitation	Synthetic demonstration only; no actual item, currency, quote date, float or supply is asserted.

@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "captured_on": "2026-10-22",
+  "note": "Integrity baseline, not proof of historical creation dates. Absent untracked files are optional; present files must match.",
+  "files": [
+    {
+      "path": "historical/2023/history/c++ 5 higher quality letters descrescator.txt",
+      "bytes": 210969,
+      "sha256": "f4bac15eeead85723894775e3385f8c2a1b2cf8114244d33a499e4c209aa1a9e",
+      "tracked": false
+    },
+    {
+      "path": "historical/2023/history/c++ 5 higher quality letters.txt",
+      "bytes": 203524,
+      "sha256": "994d6b894a508cc121a35d987c4025e9347751a99de839935e0f21200aa8dac5",
+      "tracked": false
+    },
+    {
+      "path": "historical/2023/history/c++ 5 higher quality numbers.txt",
+      "bytes": 200493,
+      "sha256": "727d976d92a57d9b6e7892d551b2549f473fa1625b4cb060afb01b0b070982d4",
+      "tracked": true
+    },
+    {
+      "path": "historical/2023/history/c++ 6 higher quality numbers.txt",
+      "bytes": 200487,
+      "sha256": "763eb92599cd1def50806daba65abe7ed77f7ec9a14fa8b88c127d680798d4ee",
+      "tracked": false
+    },
+    {
+      "path": "historical/2023/history/c++ final version full auto.txt",
+      "bytes": 218555,
+      "sha256": "2e94ae182835c68d0a98da391e7fc0aa5bfd2b8fb090a9fc6cccc14c94b6febc",
+      "tracked": false
+    },
+    {
+      "path": "historical/2023/history/c++ main numbers.txt",
+      "bytes": 200487,
+      "sha256": "1033b72358f9207255ac07b703e3433eca2feca1480f8ccfb37a58ca18f09851",
+      "tracked": false
+    },
+    {
+      "path": "historical/2023/history/CASES AUTO latest update.xlsx",
+      "bytes": 413818,
+      "sha256": "ad7af69f65d7b7ce0beff8f1e4962a6218f3ad60aa2613a9b8e5de143f5b2eee",
+      "tracked": false
+    },
+    {
+      "path": "historical/2023/history/CASES AUTO og.xlsx",
+      "bytes": 429631,
+      "sha256": "79fed4ff4b0b06b0fb5f5f7e2823dccc48f9ad75799bacf123767ee450226d64",
+      "tracked": true
+    },
+    {
+      "path": "historical/2023/history/final version.txt",
+      "bytes": 201466,
+      "sha256": "95b5e4f04c97aee92aa628fbe851bcfcbe79a608bfb97d51d5c228c57e60e6fc",
+      "tracked": true
+    },
+    {
+      "path": "historical/2023/history/google sheets final code.txt",
+      "bytes": 45123,
+      "sha256": "adad34fdd6fadf13c91f2cd4891eebe8b5c136cc4858a09004410a67890b6006",
+      "tracked": true
+    },
+    {
+      "path": "historical/2023/history/google sheets normal.txt",
+      "bytes": 21492,
+      "sha256": "36c8966f051640082c0d6fc221d569742e386b91fb1bf5a446c2e6bf561c85ee",
+      "tracked": false
+    },
+    {
+      "path": "historical/2023/history/google sheets st.txt",
+      "bytes": 25793,
+      "sha256": "f4c51bc7490917f4abbede7127d4e771a3d4c6a20ec91762904c12a951079330",
+      "tracked": false
+    },
+    {
+      "path": "historical/2023/history/principiu.txt",
+      "bytes": 297,
+      "sha256": "74bb0b6b4cdcac50c7e20e9fbdd8512a41c453dec28c47dc0a6e17cc53a58e65",
+      "tracked": true
+    },
+    {
+      "path": "historical/2024/most recent version i think/bin/Debug/trade up.exe",
+      "bytes": 1143450,
+      "sha256": "8aaadbf5c9d8cabb53c09f8b63fb3268a1f268f8327d3a1ac60fa459fb5bdbb3",
+      "tracked": false
+    },
+    {
+      "path": "historical/2024/most recent version i think/Copy.cpp",
+      "bytes": 203525,
+      "sha256": "328060721ce60595ee51dd4b8a31fc928dce510fde12c8dd447274aba362a2ee",
+      "tracked": true
+    },
+    {
+      "path": "historical/2024/most recent version i think/Copy.exe",
+      "bytes": 1084046,
+      "sha256": "a2fab4d8d2edd771df76f3c3638954ec3ae98a72b0248cf39df5b1a863ce3e4e",
+      "tracked": false
+    },
+    {
+      "path": "historical/2024/most recent version i think/Copy.o",
+      "bytes": 82747,
+      "sha256": "88e9cbd07816592ef93eacb27446fbb18cbf85842df249e8d8e8241531c13ec5",
+      "tracked": false
+    },
+    {
+      "path": "historical/2024/most recent version i think/input.txt",
+      "bytes": 25036,
+      "sha256": "b7962f66689f395cb6da0858f1d69ff0035752d11aacebc4df458d786f489d41",
+      "tracked": true
+    },
+    {
+      "path": "historical/2024/most recent version i think/main.cpp",
+      "bytes": 206223,
+      "sha256": "840a7a1267ac722a7fcd7f094d37eda1a0ef30ca75a55e761d77e4dc09d3ed59",
+      "tracked": true
+    },
+    {
+      "path": "historical/2024/most recent version i think/main.exe",
+      "bytes": 1123667,
+      "sha256": "43920f2d45c98458acd31bb3cbaaf31985a5f629705167245d59d9e877154b0b",
+      "tracked": false
+    },
+    {
+      "path": "historical/2024/most recent version i think/main.o",
+      "bytes": 92825,
+      "sha256": "5d57db440f40470abe67fcc3b294ac9c078f96f996801f396d1fd005e028a66a",
+      "tracked": false
+    },
+    {
+      "path": "historical/2024/most recent version i think/obj/Debug/main.o",
+      "bytes": 114147,
+      "sha256": "beb793804edcb7abdd0b1d4f856a77b2a9fef1294d09a349602567d7a3370a7a",
+      "tracked": false
+    },
+    {
+      "path": "historical/2024/most recent version i think/trade up.cbp",
+      "bytes": 1136,
+      "sha256": "d07c863767c363a7178320dbc38dcbac96fb96433655cd11e3f850e4043c4e5b",
+      "tracked": false
+    },
+    {
+      "path": "historical/2024/most recent version i think/trade up.depend",
+      "bytes": 116,
+      "sha256": "3a7c54627c644a56e75e13100892ed2aa2ddab83af4a39474f8b6f4cbe0dbba7",
+      "tracked": false
+    },
+    {
+      "path": "historical/2024/most recent version i think/trade up.layout",
+      "bytes": 549,
+      "sha256": "0e00574764368a6cfae58c9b1908ea4ce8992b819fadd0a530c7323dd9ef95ac",
+      "tracked": false
+    },
+    {
+      "path": "historical/2024/most recent version i think/www.txt",
+      "bytes": 67139,
+      "sha256": "31f2220e045a5264a0635b05809799f62dd98607ed224222ea9d74fa61868198",
+      "tracked": false
+    },
+    {
+      "path": "historical/supporting/excel/CASES AUTO.xlsx",
+      "bytes": 666483,
+      "sha256": "554c98496b4ede43ea9990aaebab8dd3f5cd87446bb0ce2feafa8155550c6ec5",
+      "tracked": true
+    },
+    {
+      "path": "historical/supporting/excel/Screenshot 2026-10-20 184349.jpg",
+      "bytes": 148908,
+      "sha256": "01b3eb1d528194dc9c031b78c5ef75979e0fe7b09baa7a234b845063207c967b",
+      "tracked": false
+    },
+    {
+      "path": "historical/supporting/excel/Screenshot 2026-10-20 184435.jpg",
+      "bytes": 174807,
+      "sha256": "6fd3bd75870a9fefb9f75e491bb1ab8cd0dfc27cbb587e44edbce05cf3a15710",
+      "tracked": false
+    },
+    {
+      "path": "historical/supporting/excel/Screenshot 2026-10-20 184449.jpg",
+      "bytes": 169413,
+      "sha256": "21b461aee9d48fc1daa99d26d851b5fc3432bfce47c0d40421b3f5097c78ab70",
+      "tracked": false
+    },
+    {
+      "path": "historical/supporting/excel/Screenshot 2026-10-20 184502.jpg",
+      "bytes": 178782,
+      "sha256": "3505aefd371e1089fd4097b85327a6f3a9aa3c52a42f7eda4b94f3ffb3e440b4",
+      "tracked": false
+    },
+    {
+      "path": "historical/supporting/excel/script excel 2023.txt",
+      "bytes": 21494,
+      "sha256": "5b73031c4972c93d3f3c3209f61648538d94ec5ff9832f3f7d571fd8c8ef7409",
+      "tracked": true
+    },
+    {
+      "path": "historical/supporting/excel/script excel 2024.txt",
+      "bytes": 46584,
+      "sha256": "41744ff5dc4513a63be0809631309b208a32f6987ca6604d653ca6ae2be56ae1",
+      "tracked": true
+    }
+  ]
+}

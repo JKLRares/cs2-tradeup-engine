@@ -1,0 +1,4 @@
+# Keep the reviewed generated source deterministic on every modern checkout.
+# Historical paths deliberately retain their existing Git attributes/bytes.
+/src/historical_cells.inc text eol=lf
+/.github/workflows/*.yml text eol=lf

@@ -1,6 +1,8 @@
 ﻿# Build artifacts
 build/
+build-*/
 cmake-build-*/
+out/
 Debug/
 Release/
 *.exe
@@ -9,6 +11,16 @@ Release/
 *.pdb
 *.ilk
 *.idb
+*.a
+*.lib
+*.dll
+*.so
+*.so.*
+*.dylib
+CMakeCache.txt
+CMakeFiles/
+Testing/
+compile_commands.json
 
 # IDE and local files
 .vs/
@@ -24,6 +36,9 @@ Release/
 *.7z
 *.rar
 .dist/
+__pycache__/
+*.pyc
+.venv/
 
 # Generated benchmark output
 benchmarks/results/
