@@ -1,24 +1,54 @@
 # CS2 Trade-Up Engine
 **Author:** Rareș Constantinescu
 
-A [trade-up contract](https://help.steampowered.com/en/faqs/view/0151-608B-BCAA-D7D5)
-exchanges Counter-Strike weapon skins for a higher-rarity result. The possible
-results have different values, so comparing their expected return with the cost
-of the inputs matters.
+A Counter-Strike [trade-up contract](https://help.steampowered.com/en/faqs/view/0151-608B-BCAA-D7D5)
+exchanges ten skins for a randomized higher-rarity outcome. Different combinations
+have different input costs, outcome probabilities and expected returns. Finding
+promising combinations manually becomes a combinatorial search problem as the
+dataset grows.
 
-This offline C++20 application analyzes historical ten-skin combinations. It lets
-you evaluate a contract or search combinations, compare modeled returns, and
-inspect the results with their probabilities and assumptions.
+CS2 Trade-Up Engine is an offline C++20 application designed to identify potentially
+profitable Counter-Strike trade-up contracts from structured skin price and outcome data.
 
-You can:
+Given a supported dataset, the engine systematically generates trade-up combinations,
+calculates their input costs, outcome probabilities and expected returns, and
+identifies those exceeding a configurable profitability threshold. When a search
+completes, it covers every qualifying contract within the selected supported search
+domain.
 
-- Load the preserved 2024 price matrix or a custom offline UTF-8 catalog.
+The application combines optimized combinatorial enumeration with exact arithmetic,
+allowing results to be evaluated, ranked and exported without floating-point rounding
+affecting profitability decisions.
+
+The project originated in 2023–2024 as a personal high-school trade-up finder,
+using Google Sheets to organize skin prices and C++ to search for profitable combinations.
+It has since evolved into a standalone C++20 application with an optimized search engine,
+exact arithmetic, and a command-line interface. The original implementation and supporting
+files are preserved in `historical/`.
+
+## Capabilities
+
+- Load a local `catalog-v1` dataset or a matrix in the documented format.
 - Calculate input cost, modeled outcome probabilities, expected return on investment
   (ROI) and the worst modeled receipt.
-- Search the supported **5/5** and **6/4** input-wear profiles.
+- Search the supported **5/5** and **6/4** input-wear profiles with two to five
+  active input buckets.
 - Rank results by expected ROI or profit and filter by return threshold or cost.
 - Export exact JSON/CSV values with identities, provenance and completion status.
 - Set evaluation, work, time and storage budgets, with explicit incomplete results.
+
+## How it works
+
+Dataset → contract generation → exact probability and expected-return evaluation
+→ profitability filtering and ranking → results and exports.
+
+The importer validates prices, collection references and required provenance
+fields. Input buckets represent interchangeable inputs from one collection and
+wear category. The optimized search enumerates bucket quantities rather than
+every ordering of ten skins, reuses collection summaries and applies proved
+bounds to skip combinations that cannot exceed the threshold. Exact fractions
+and scaled-integer comparisons keep rounding out of qualification and ranking;
+full outcome distributions remain available on demand.
 
 ## Quick start
 
@@ -28,16 +58,23 @@ From the repository root in Windows PowerShell, with MSYS2 UCRT64 GCC installed:
 $env:PATH = 'C:\msys64\ucrt64\bin;' + $env:PATH
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build_cli.ps1 -Configuration Release -BuildDirectory build/direct
 $app = '.\build\direct\tradeup_Release.exe'
-$matrix = '.\historical\2024\most recent version i think\input.txt'
-& $app replay --input $matrix --details
+$catalog = '.\examples\synthetic-equal-returns.tsv'
+& $app search --input $catalog --format catalog-v1 --profile '5/5' --top 3
 ```
 
-This builds the application and replays an authentic saved historical contract.
+This builds the application and searches an included **synthetic** catalog.
 See [toolchain setup and alternative builds](docs/building.md) if GCC is missing
 or installed elsewhere. Running the application needs no Python or spreadsheet
 packages. Use `& $app --help` for all commands and options.
 
-## A historical example
+## Included price-matrix example
+
+Replay an authentic saved contract using the included 2024 matrix:
+
+```powershell
+$matrix = '.\historical\2024\most recent version i think\input.txt'
+& $app replay --input $matrix --details
+```
 
 The replay evaluates **`b002:5,b029:5`** in **`st-ft-mw-mov`**: five BREAKOUT
 higher-wear inputs and five BROKEN FANG lower-wear inputs, using preserved prices.
@@ -58,17 +95,6 @@ To evaluate the same allocation explicitly:
 ```powershell
 & $app eval --input $matrix --scenario st-ft-mw-mov --contract 'b002:5,b029:5'
 ```
-
-## How it works
-
-Local prices and scenario metadata → validated data model → exact evaluation
-and optimized search → ranked results and exports.
-
-The importer checks prices, collection mappings and provenance. Evaluation combines
-each input collection's modeled outcomes and compares expected receipts with cost.
-Search groups interchangeable inputs into quantities rather than testing every
-ordering of ten skins. Exact fractions keep rounding out of qualification and
-ranking; outcome details remain available for inspection.
 
 ## Search, filter and export
 
@@ -94,8 +120,10 @@ A deliberately incomplete historical prefix:
 $LASTEXITCODE # 3: incomplete search; retained results are partial
 ```
 
-Only `complete` asserts coverage of the selected domain. Budget and arithmetic
-interruptions are explicit; a bounded prefix does not establish global rankings.
+Only status `complete` asserts exhaustive coverage of the selected supported
+search domain, including candidates safely excluded by bounds. Budget and
+arithmetic interruptions are explicit; a bounded prefix has partial results and
+does not establish rankings across that domain.
 
 ```powershell
 & $app replay --input $matrix --details --output '.\build\replay.json'
@@ -163,19 +191,22 @@ See [building](docs/building.md) for Debug, direct GCC and Linux commands.
 ## Background
 
 The project began as an independently developed personal high-school trade-up
-finder in 2023–2024. Google Sheets organized prices and C++ searched selected wear
-splits. Original code, workbooks and data remain preserved in `historical/`,
+finder in 2023–2024. Original code, workbooks and data remain preserved in `historical/`,
 separate from the modern implementation. The [historical baseline](docs/historical-baseline.md)
 documents the surviving evidence and its provenance.
 
 ## Model and limitations
 
-The application uses `historical-quote-tickets-v1`, a proportional 13% deduction
-and a higher-wear quote basket with labeled composite/estimated values.
+All datasets use the implemented `historical-quote-tickets-v1` probability policy
+and a proportional 13% deduction. Custom catalogs supply their own priced outcomes
+and input buckets; matrix inputs retain the fixed collection/scenario mapping and
+higher-wear quote basket with labeled composite/estimated values.
 The [mathematical model](docs/mathematical-model.md) states those assumptions.
-It does not verify current CS2 mechanics, exact floats, output wear feasibility
-or actual listing availability. There are no live prices, account connections
-or automated trading, and no guarantee of profit.
+Replacing prices does not update probability rules, mappings or wear mechanics.
+Dataset validation checks declared structure and values; it does not verify
+current CS2 mechanics, exact floats, output wear feasibility or listing availability.
+There are no live prices, account connections or automated trading, and no
+guarantee of profit.
 
 The historical 5/5 domain contains 80,723,385 contracts. Supporting that dataset
 does not imply completing its search. Unsupported signed-64-bit intermediates
