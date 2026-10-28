@@ -182,5 +182,13 @@ does not imply completing its search. Unsupported signed-64-bit intermediates
 fail explicitly; storage/work budgets and cooperative time checks are not
 whole-process memory caps or hard deadlines.
 
-No license has been selected. Public distribution still requires the author's
-[license choice and historical-data provenance review](docs/distribution.md).
+## License
+
+No software license is currently granted or selected. A license may be chosen
+later, after the [historical-data review and public-release
+decision](docs/distribution.md).
+
+Redistribution rights for historical prices, workbooks, third-party materials
+and derived datasets remain unestablished, including copies embedded in modern
+source, fixtures or documentation. The absence of a license does not establish
+permission to redistribute those materials.

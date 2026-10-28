@@ -1,15 +1,14 @@
 # Distribution and provenance decisions
 
-No repository license has been selected or added, and no repository/release was
-published as part of this work.
-The application is ready for source review; permission to redistribute every
-preserved material still needs the owner's decision.
+No software license is currently granted or selected for the original modern
+application code or development tools. A license may be chosen later, after the
+public-release decision.
 
-For original source, an **MIT license** is a reasonable portfolio recommendation
-if the author wants permissive reuse with preservation of the copyright/license
-notice. Review the [official MIT text](https://opensource.org/license/mit) before
-choosing. This recommendation does not grant rights to third-party content.
-Confirm ownership and retain any required third-party notices before distribution.
+Redistribution rights for `historical/`, externally sourced prices, historical
+workbooks, third-party materials and derived datasets remain unestablished.
+The absence of a software license does not establish permission to redistribute
+those materials. A separate owner decision on historical-data provenance and
+public release is still required.
 
 Review these **already tracked** historical materials before public distribution:
 
@@ -29,12 +28,23 @@ rights, privacy, or the contents of every cell. Acquisition source, currency,
 quote times and market-data permissions remain unestablished. Item names and
 third-party marks do not establish affiliation or permission.
 
-The reconstructed cell ledger and required numeric fixtures are derived from
-this evidence. Include them in the scope of the provenance decision. An original
-source-code license cannot automatically resolve workbook/data rights. If notices
-or exclusions are needed, decide them explicitly before publication while
-retaining the independent archive unchanged. Do not silently remove or rewrite
-historical files or history to produce a cleaner narrative.
+The provenance review also covers historical material outside the archive:
+
+- [`src/historical_cells.inc`](../src/historical_cells.inc) is the workbook-derived
+  price/formula ledger, despite its source-file extension.
+- Historical metadata in [`src/historical.cpp`](../src/historical.cpp) and
+  [`scenarios.json`](../tests/fixtures/scenarios.json), and the `saved_2024_first_line`
+  case in [`numerical_cases.json`](../tests/fixtures/numerical_cases.json), remain
+  subject to the provenance decision.
+- Historical prices/results reproduced in test/verification code, README/docs or
+  generated exports also require the provenance review.
+
+A tracked-file and notice review found no separate third-party license notices
+in the modern code/tools; this does not establish rights to the historical
+materials or third-party item/collection names and marks. Confirm authorship of
+archived code/scripts and retain any required third-party notices before public
+distribution. Keep the independent archive unchanged; do not silently remove or
+rewrite historical files or history to produce a cleaner narrative.
 
 The 22 additional local files include saved results, screenshots, damaged or
 misnamed files, IDE metadata and six historical executable/object artifacts.
@@ -44,7 +54,7 @@ not fabricated development dates. The separate original archive remains read-onl
 
 ## Release artifacts
 
-Source distribution is the present deliverable. Binary packaging was deliberately
+Source review is the present deliverable. Binary packaging was deliberately
 deferred: no tested standalone bundle or installer exists. Windows UCRT64 builds
 need GCC runtime DLLs (see [building](building.md)); redistribution would also
 require checking their applicable notices and transitive dependencies in a clean
@@ -56,7 +66,8 @@ Only include historical fixtures after the data decision. That layout is a
 proposal, not an implemented/verified package or public release.
 
 Before making the repository public, review the full existing Git history for
-private material, decide the license/data scope, and review the
+private material, resolve the historical materials' redistribution rights and
+make a separate public-release decision, then review the
 [successful hosted Linux/Windows and sanitizer results](verification.md#automation-and-actual-coverage).
 Keep the repository private while resolving any such question; visibility and
 release publication remain owner actions.
